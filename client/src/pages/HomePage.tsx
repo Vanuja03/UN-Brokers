@@ -79,9 +79,7 @@ function Hero() {
       <Photo src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />
       <div className="absolute inset-0 bg-gradient-to-r from-navy-950 via-navy-950/92 to-navy-900/75" />
       <Container className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:py-16">
-        <div className="relative">
-          <img src="/logo.png" alt="" aria-hidden="true" className="pointer-events-none absolute bottom-0 left-0 top-0 h-full w-auto max-w-none object-contain object-left select-none opacity-25" />
-          <div className="relative">
+        <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-gold">Insurance brokerage</p>
           <h1 className="mt-3 max-w-xl text-4xl font-bold leading-tight sm:text-5xl">Protection You Can Trust. Coverage That Fits Your Life.</h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-slate-200 sm:text-lg">Find the right insurance solutions for your vehicle, family, property, travels, and business with guidance from a team committed to protecting what matters most.</p>
@@ -90,7 +88,6 @@ function Hero() {
             <Button to="/insurance" variant="outline">Explore Our Coverage</Button>
           </div>
           <p className="mt-5 max-w-xl text-sm text-slate-300">A quotation inquiry is a request for options. It does not start a policy or guarantee acceptance.</p>
-          </div>
         </div>
         <form onSubmit={submit} className="rounded-2xl bg-white p-5 text-navy-900 shadow-card sm:p-6">
           <h2 className="text-xl font-bold">Start a quotation inquiry</h2>
