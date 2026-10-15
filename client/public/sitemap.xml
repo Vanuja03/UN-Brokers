@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>/</loc></url>
+  <url><loc>/about</loc></url>
+  <url><loc>/insurance</loc></url>
+  <url><loc>/insurance/motor</loc></url>
+  <url><loc>/insurance/motor-third-party</loc></url>
+  <url><loc>/insurance/travel</loc></url>
+  <url><loc>/insurance/fire</loc></url>
+  <url><loc>/insurance/dwelling-fire</loc></url>
+  <url><loc>/insurance/workers-compensation</loc></url>
+  <url><loc>/insurance/money-in-transit</loc></url>
+  <url><loc>/insurance/personal-accident</loc></url>
+  <url><loc>/insurance/title-insurance</loc></url>
+  <url><loc>/partners</loc></url>
+  <url><loc>/testimonials</loc></url>
+  <url><loc>/team</loc></url>
+  <url><loc>/contact</loc></url>
+  <url><loc>/request-quote</loc></url>
+  <url><loc>/faq</loc></url>
+  <url><loc>/privacy-policy</loc></url>
+  <url><loc>/terms</loc></url>
+  <url><loc>/guides</loc></url>
+</urlset>
