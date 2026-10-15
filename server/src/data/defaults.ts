@@ -1,6 +1,6 @@
 export const defaultAbout = {
   intro:
-    'UN Brokers helps people and businesses request insurance quotations and understand the kinds of cover that may suit their vehicle, travel, property, or work. The team explains options in plain language and supports you through the inquiry.',
+    'UN Insurance Brokers helps people and businesses request insurance quotations and understand the kinds of cover that may suit their vehicle, travel, property, or work. The team explains options in plain language and supports you through the inquiry.',
   mission: 'To help customers understand their insurance options and request quotations with clear, practical guidance.',
   vision: 'To be a brokerage people return to when their cover needs change.',
 };

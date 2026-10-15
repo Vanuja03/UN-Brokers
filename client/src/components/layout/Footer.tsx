@@ -3,6 +3,7 @@ import { services } from '../../content/services';
 import { useSettings } from '../../context/SettingsContext';
 import { whatsappHref } from '../../services/api';
 import { Container } from '../common/Container';
+import { Logo } from '../common/Logo';
 
 export function Footer() {
   const { settings } = useSettings();
@@ -18,7 +19,10 @@ export function Footer() {
     <footer className="bg-navy-950 text-slate-200">
       <Container className="grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className="font-heading text-xl font-bold text-white">{settings.companyName}</p>
+          <Link to="/" className="inline-flex items-center gap-3">
+            <Logo className="h-16 w-auto" />
+            <span className="font-heading text-xl font-bold text-white">{settings.companyName}</span>
+          </Link>
           <p className="mt-3 text-sm leading-6 text-slate-300">{settings.tagline}</p>
           {socials.length > 0 ? (
             <ul className="mt-4 flex flex-wrap gap-3 text-sm">

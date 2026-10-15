@@ -36,6 +36,21 @@
   .field[aria-invalid='true'] {
     @apply border-red-600;
   }
+
+  .form-shell {
+    container-type: inline-size;
+  }
+
+  .form-pair {
+    display: grid;
+    gap: 1.25rem;
+  }
+
+  @container (min-width: 34rem) {
+    .form-pair {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {

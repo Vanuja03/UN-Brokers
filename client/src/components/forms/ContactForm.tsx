@@ -53,12 +53,12 @@ export function ContactForm() {
   const error = (name: keyof ContactValues) => form.formState.errors[name]?.message;
 
   return (
-    <form className="grid gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-card sm:p-6" onSubmit={form.handleSubmit(onSubmit)} noValidate>
+    <form className="form-shell grid gap-5 rounded-2xl border border-slate-200 bg-white p-5 shadow-card sm:p-7" onSubmit={form.handleSubmit(onSubmit)} noValidate>
       {formError ? <p role="alert" className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{formError}</p> : null}
       <Labeled id="contact-name" label="Name" required error={error('name')}>
         <input id="contact-name" className="field" autoComplete="name" {...form.register('name')} />
       </Labeled>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="form-pair">
         <Labeled id="contact-email" label="Email" required error={error('email')}>
           <input id="contact-email" className="field" autoComplete="email" {...form.register('email')} />
         </Labeled>

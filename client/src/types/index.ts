@@ -97,7 +97,7 @@ export type InsuranceCopy = {
 };
 
 export const fallbackSettings: PublicSettings = {
-  companyName: 'UN Brokers',
+  companyName: 'UN Insurance Brokers',
   logoUrl: '',
   tagline: 'Insurance guidance for the things that matter',
   telephone: '',
@@ -109,7 +109,7 @@ export const fallbackSettings: PublicSettings = {
   defaultCurrency: 'LKR',
   businessTimezone: 'Asia/Colombo',
   aboutIntro:
-    'UN Brokers helps people and businesses request insurance quotations and understand the kinds of cover that may suit their vehicle, travel, property, or work.',
+    'UN Insurance Brokers helps people and businesses request insurance quotations and understand the kinds of cover that may suit their vehicle, travel, property, or work.',
   mission: 'To help customers understand their insurance options and request quotations with clear, practical guidance.',
   vision: 'To be a brokerage people return to when their cover needs change.',
   values: [

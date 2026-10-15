@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { ZodError } from 'zod';
@@ -36,6 +36,22 @@ function fieldId(name: string) {
   return name.replace(/\./g, '-');
 }
 
+function scrollBehavior(): ScrollBehavior {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
+}
+
+function revealForm(form: HTMLFormElement | null, toTop = false) {
+  if (!form) return;
+  const behavior = scrollBehavior();
+  const scroller = form.parentElement;
+  if (toTop && scroller && scroller.scrollHeight > scroller.clientHeight + 8) {
+    scroller.scrollTo({ top: 0, behavior });
+    return;
+  }
+  const target = form.querySelector('[role="alert"]') ?? form;
+  target.scrollIntoView({ block: 'nearest', behavior });
+}
+
 function FieldShell({ id, label, required, error, children }: { id: string; label: string; required?: boolean; error?: string; children: React.ReactNode }) {
   return (
     <div>
@@ -55,6 +71,8 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
   const [formError, setFormError] = useState('');
   const [reference, setReference] = useState('');
   const [idempotencyKey] = useState(() => crypto.randomUUID());
+  const formRef = useRef<HTMLFormElement>(null);
+  const skipScroll = useRef(true);
   const startingType = fixedType ?? initialType ?? 'motor';
 
   const form = useForm<FormValues>({
@@ -77,6 +95,14 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
   const fields = useMemo(() => fieldsFor(insuranceType, currency), [insuranceType, currency]);
   const groups = [...new Set(fields.map((field) => field.group))];
 
+  useEffect(() => {
+    if (skipScroll.current) {
+      skipScroll.current = false;
+      return;
+    }
+    revealForm(formRef.current, true);
+  }, [step]);
+
   function changeType(next: InsuranceType) {
     setValue('insuranceType', next);
     setValue('insuranceDetails', defaultDetails(next));
@@ -97,6 +123,7 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
       const result = contactSchema.safeParse(form.getValues());
       if (!result.success) {
         applyZod(result.error);
+        requestAnimationFrame(() => revealForm(formRef.current));
         return;
       }
       setStep(2);
@@ -105,6 +132,7 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
     const result = detailSchemas[insuranceType].safeParse(form.getValues().insuranceDetails);
     if (!result.success) {
       applyZod(result.error, 'insuranceDetails');
+      requestAnimationFrame(() => revealForm(formRef.current));
       return;
     }
     setStep(3);
@@ -116,6 +144,7 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
     if (!parsed.success) {
       applyZod(parsed.error);
       setFormError('Please check the highlighted fields.');
+      requestAnimationFrame(() => revealForm(formRef.current));
       return;
     }
     try {
@@ -160,15 +189,16 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
   }
 
   return (
-    <form className="rounded-2xl border border-slate-200 bg-white p-5 shadow-card sm:p-6" onSubmit={handleSubmit(onSubmit)} noValidate aria-busy={formState.isSubmitting}>
+    <form ref={formRef} className="form-shell scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-5 shadow-card sm:p-7" onSubmit={handleSubmit(onSubmit)} noValidate aria-busy={formState.isSubmitting}>
       <p className="text-sm font-semibold uppercase tracking-[0.14em] text-navy-700">Quotation inquiry</p>
       <h2 className="mt-1 text-2xl font-bold text-navy-900">{fixedType ? services.find((item) => item.slug === fixedType)?.name : 'Tell us what you need'}</h2>
       <ol className="mt-5 grid grid-cols-3 gap-2" aria-label="Form progress">
         {steps.map((label, index) => {
           const current = step === index + 1;
           return (
-            <li key={label} aria-current={current ? 'step' : undefined} className={`rounded-lg px-2 py-2 text-center text-xs font-semibold sm:text-sm ${current ? 'bg-navy-900 text-white' : 'bg-navy-50 text-navy-800'}`}>
-              {index + 1}. {label}
+            <li key={label} aria-current={current ? 'step' : undefined} className={`rounded-lg px-2 py-2.5 text-center text-xs font-semibold leading-4 ${current ? 'bg-navy-900 text-white' : 'bg-navy-50 text-navy-800'}`}>
+              <span className="block">{index + 1}</span>
+              <span className="mt-1 block">{label}</span>
             </li>
           );
         })}
@@ -177,11 +207,11 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
       {formError ? <p role="alert" className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{formError}</p> : null}
 
       {step === 1 ? (
-        <div className="mt-5 grid gap-4">
+        <div className="mt-5 grid gap-5">
           <FieldShell id="customerName" label="Full name" required error={errorFor('customerName')}>
             <input id="customerName" className="field" autoComplete="name" aria-invalid={Boolean(errorFor('customerName'))} aria-describedby={errorFor('customerName') ? 'customerName-error' : undefined} {...register('customerName')} />
           </FieldShell>
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="form-pair">
             <FieldShell id="phone" label="Mobile number" required error={errorFor('phone')}>
               <input id="phone" className="field" autoComplete="tel" inputMode="tel" aria-invalid={Boolean(errorFor('phone'))} {...register('phone')} />
             </FieldShell>
@@ -219,7 +249,7 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
           {groups.map((group) => (
             <fieldset key={group}>
               <legend className="text-sm font-semibold text-navy-900">{group}</legend>
-              <div className="mt-3 grid gap-4">
+              <div className="mt-3 grid gap-5">
                 {fields.filter((field) => field.group === group).map((field) => (
                   <DetailField key={field.name} field={field} details={details} register={register} error={detailError(field.name)} />
                 ))}
@@ -326,7 +356,7 @@ function TravelBenefits({ details, setValue }: { details: FormValues['insuranceD
     <fieldset>
       <legend className="text-sm font-semibold text-navy-900">Benefits you want considered</legend>
       <p className="mt-1 text-xs text-slate-500">Optional. An insurer may not offer every benefit.</p>
-      <div className="mt-3 grid gap-2 sm:grid-cols-2">
+      <div className="form-pair mt-3">
         {options.map(([value, label]) => (
           <label key={value} className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm">
             <input type="checkbox" checked={selected.includes(value)} onChange={() => toggle(value)} /> {label}

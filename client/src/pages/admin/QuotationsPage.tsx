@@ -53,7 +53,7 @@ export function QuotationsPage() {
         <h1 className="text-3xl font-bold">Quotations</h1>
         <button type="button" className="rounded-full bg-navy-900 px-4 py-2 text-sm font-semibold text-white" onClick={() => void exportCsv()}>Export CSV</button>
       </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
         <input className="field" placeholder="Search name, email, phone, reference" value={search} onChange={(event) => { setPage(1); setSearch(event.target.value); }} aria-label="Search inquiries" />
         <select className="field" value={status} onChange={(event) => { setPage(1); setStatus(event.target.value); }} aria-label="Filter by status">
           {statuses.map((item) => <option key={item || 'all'} value={item}>{item ? STATUS_LABELS[item] : 'All statuses'}</option>)}

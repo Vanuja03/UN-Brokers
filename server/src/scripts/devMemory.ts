@@ -4,7 +4,7 @@ process.env.JWT_REFRESH_SECRET ||= 'dev-only-refresh-secret-not-for-production-u
 process.env.CLIENT_ORIGIN ||= 'http://localhost:5173';
 process.env.COOKIE_SECURE ||= 'false';
 process.env.COOKIE_SAMESITE ||= 'lax';
-process.env.COMPANY_NAME ||= 'UN Brokers';
+process.env.COMPANY_NAME ||= 'UN Insurance Brokers';
 
 const { MongoMemoryServer } = await import('mongodb-memory-server');
 const memory = await MongoMemoryServer.create();

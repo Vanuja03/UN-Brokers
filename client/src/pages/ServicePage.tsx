@@ -44,8 +44,8 @@ export function ServicePage({ slug }: { slug: InsuranceType }) {
           </div>
         </Container>
       </section>
-      <Container className="grid gap-10 py-12 lg:grid-cols-[minmax(0,1fr)_400px]">
-        <aside id="quote" className="order-1 lg:order-2 lg:sticky lg:top-24 lg:self-start">
+      <Container className="grid gap-10 py-12 lg:grid-cols-[minmax(0,1fr)_minmax(22rem,30rem)]">
+        <aside id="quote" className="order-1 lg:order-2 lg:sticky lg:top-24 lg:max-h-[calc(100dvh-7rem)] lg:self-start lg:overflow-y-auto lg:overscroll-contain lg:pe-1">
           <QuoteForm fixedType={slug} sourcePage={`/insurance/${slug}`} />
         </aside>
         <article className="order-2 space-y-10 lg:order-1">

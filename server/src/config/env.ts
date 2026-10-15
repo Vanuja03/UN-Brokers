@@ -21,7 +21,7 @@ const envSchema = z
     SMTP_PASS: z.string().optional().default(''),
     SMTP_FROM: z.string().optional().default(''),
     BUSINESS_NOTIFICATION_EMAIL: z.string().optional().default(''),
-    COMPANY_NAME: z.string().min(1).default('UN Brokers'),
+    COMPANY_NAME: z.string().min(1).default('UN Insurance Brokers'),
     COMPANY_TAGLINE: z.string().optional().default('Insurance guidance for the things that matter'),
     COMPANY_PHONE: z.string().optional().default(''),
     COMPANY_EMAIL: z.string().optional().default(''),

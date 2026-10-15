@@ -1,5 +1,6 @@
 import { FormEvent, useState } from 'react';
 import { Navigate, useNavigate } from 'react-router-dom';
+import { Logo } from '../../components/common/Logo';
 import { api, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
@@ -31,9 +32,10 @@ export function LoginPage() {
   }
 
   return (
-    <main className="grid min-h-screen place-items-center bg-navy-950 px-4">
-      <form onSubmit={onSubmit} className="w-full max-w-md rounded-3xl bg-white p-8 shadow-card">
-        <p className="text-sm font-semibold uppercase tracking-[0.16em] text-navy-700">Staff</p>
+    <main className="flex min-h-dvh flex-col bg-navy-950 px-4 py-8">
+      <form onSubmit={onSubmit} className="m-auto w-full max-w-md rounded-3xl bg-white p-8 shadow-card">
+        <Logo alt="UN Insurance Brokers" className="mx-auto h-24 w-auto" />
+        <p className="mt-4 text-sm font-semibold uppercase tracking-[0.16em] text-navy-700">Staff</p>
         <h1 className="mt-2 text-3xl font-bold text-navy-900">Sign in</h1>
         <p className="mt-2 text-sm text-slate-600">Accounts are created by an administrator. There is no public registration.</p>
         {error ? <p role="alert" className="mt-4 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-800">{error}</p> : null}

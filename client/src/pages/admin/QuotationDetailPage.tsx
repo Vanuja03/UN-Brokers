@@ -121,12 +121,12 @@ export function QuotationDetailPage() {
       </section>
       <form onSubmit={updateStatus} className="rounded-2xl border border-slate-200 bg-white p-5">
         <h2 className="font-bold">Status</h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-          <select name="status" className="field" defaultValue={quote.status} aria-label="Status">
+        <div className="mt-3 flex flex-wrap gap-3">
+          <select name="status" className="field min-w-48 flex-1" defaultValue={quote.status} aria-label="Status">
             {statuses.map((status) => <option key={status} value={status}>{STATUS_LABELS[status]}</option>)}
           </select>
-          <input name="note" className="field" placeholder="Optional note for the history" />
-          <button className="rounded-full bg-navy-900 px-4 py-2 text-sm font-semibold text-white" type="submit">Update</button>
+          <input name="note" className="field min-w-48 flex-1" placeholder="Optional note for the history" />
+          <button className="shrink-0 rounded-full bg-navy-900 px-4 py-2 text-sm font-semibold text-white" type="submit">Update</button>
         </div>
       </form>
       <form onSubmit={assign} className="rounded-2xl border border-slate-200 bg-white p-5">

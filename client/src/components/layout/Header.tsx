@@ -4,6 +4,7 @@ import { ChevronDown, Mail, Menu, Phone, X } from 'lucide-react';
 import { services } from '../../content/services';
 import { useSettings } from '../../context/SettingsContext';
 import { Container } from '../common/Container';
+import { Logo } from '../common/Logo';
 
 const links = [
   { to: '/', label: 'Home' },
@@ -69,7 +70,7 @@ export function Header() {
       )}
       <Container className="flex items-center gap-4 py-3">
         <Link to="/" className="flex shrink-0 items-center gap-3">
-          {settings.logoUrl ? <img src={settings.logoUrl} alt="" className="h-10 w-10 shrink-0 rounded-xl object-cover" /> : <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-navy-900 font-heading text-sm font-bold text-gold">UN</span>}
+          <Logo src={settings.logoUrl || '/logo.png'} className="h-14 w-auto shrink-0" />
           <span>
             <span className="block whitespace-nowrap font-heading text-lg font-bold leading-none text-navy-900">{settings.companyName}</span>
             <span className="mt-1 hidden whitespace-nowrap text-xs text-slate-500 2xl:block">{settings.tagline}</span>
