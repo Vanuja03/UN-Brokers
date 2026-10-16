@@ -12,7 +12,7 @@
   }
 
   .partner-stage {
-    --partner-gap: 20px;
+    --partner-gap: 28px;
     --partner-card-w: min(18.75rem, calc((100% - 2 * var(--partner-gap)) / 3));
     --partner-card-h: 8rem;
   }
@@ -27,18 +27,17 @@
   .partner-card {
     width: var(--partner-card-w);
     height: var(--partner-card-h);
+    transform: scale(1);
+    transform-origin: center;
+  }
+
+  .partner-card.partner-card-motion {
+    transition: transform 700ms cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .partner-card.is-center {
-    container-type: inline-size;
-    width: calc(var(--partner-card-w) + 2px);
-    height: auto;
-    margin-inline: -1px;
-  }
-
-  .partner-card.is-center > a {
-    width: 100%;
-    height: calc(var(--partner-card-h) * 100cqi / (100cqi - 2px));
+    z-index: 1;
+    transform: scale(1.14);
   }
 
   body {
