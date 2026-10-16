@@ -11,6 +11,36 @@
     scroll-margin-top: 8rem;
   }
 
+  .partner-stage {
+    --partner-gap: 20px;
+    --partner-card-w: min(18.75rem, calc((100% - 2 * var(--partner-gap)) / 3));
+    --partner-card-h: 8rem;
+  }
+
+  .partner-frame {
+    width: calc(3 * var(--partner-card-w) + 2 * var(--partner-gap));
+    max-width: 100%;
+    margin-inline: auto;
+    overflow: hidden;
+  }
+
+  .partner-card {
+    width: var(--partner-card-w);
+    height: var(--partner-card-h);
+  }
+
+  .partner-card.is-center {
+    container-type: inline-size;
+    width: calc(var(--partner-card-w) + 2px);
+    height: auto;
+    margin-inline: -1px;
+  }
+
+  .partner-card.is-center > a {
+    width: 100%;
+    height: calc(var(--partner-card-h) * 100cqi / (100cqi - 2px));
+  }
+
   body {
     @apply bg-white text-navy-900 antialiased;
   }

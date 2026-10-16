@@ -8,6 +8,7 @@ import { FaqList } from '../components/common/FaqList';
 import { Photo } from '../components/common/Photo';
 import { Button } from '../components/common/Button';
 import { ServiceCard } from '../components/insurance/ServiceCard';
+import { PartnerSlideshow } from '../components/partners/PartnerSlideshow';
 import { ContactForm } from '../components/forms/ContactForm';
 import { QuoteForm } from '../components/forms/QuoteForm';
 import { aboutImage, heroImage, services } from '../content/services';
@@ -17,7 +18,7 @@ import { api, whatsappHref } from '../services/api';
 import { useSettings } from '../context/SettingsContext';
 import { useQuoteSelection } from '../context/QuoteSelectionContext';
 import { scrollToSection } from '../utils/scrollToSection';
-import type { Faq, InsuranceType, Partner, TeamMember, Testimonial } from '../types';
+import type { Faq, InsuranceType, TeamMember, Testimonial } from '../types';
 import { INSURANCE_TYPES, isInsuranceType } from '../types';
 
 export function HomePage() {
@@ -166,29 +167,10 @@ function How() {
 }
 
 function PartnersStrip() {
-  const [items, setItems] = useState<Partner[]>([]);
-  useEffect(() => { api.get('/partners').then((response) => setItems(response.data.data)).catch(() => setItems([])); }, []);
-  const demo = items.some((item) => item.isDemo);
   return (
-    <section id="partners" className="section-anchor border-y border-slate-200 bg-white py-16">
+    <section id="partners" className="section-anchor bg-navy-100 py-16">
       <Container>
-        <SectionHeading eyebrow="Partners" title="Insurance partners and collaborators" text="Logos appear here only for relationships the business chooses to publish." />
-        {demo ? <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">Sample profiles are shown for demonstration. They are not real partnerships.</p> : null}
-        {items.length === 0 ? <p className="mt-8 text-sm text-slate-600">Partner profiles will appear here once they are added.</p> : (
-          <ul className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {items.map((item) => (
-              <li key={item._id} className="rounded-2xl border border-slate-200 p-5">
-                <div className="flex h-14 items-center">
-                  {item.logoUrl ? <img src={item.logoUrl} alt="" className="max-h-12 max-w-full object-contain" /> : <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-navy-900 text-sm font-bold text-gold">{item.name.slice(0, 1)}</span>}
-                </div>
-                <h3 className="mt-3 font-bold">{item.name}</h3>
-                {item.isDemo ? <p className="text-xs font-semibold uppercase tracking-wide text-amber-800">Sample</p> : null}
-                {item.description ? <p className="mt-2 text-sm text-slate-600">{item.description}</p> : null}
-                {item.websiteUrl ? <a className="mt-3 inline-block text-sm font-semibold underline" href={item.websiteUrl} rel="noreferrer" target="_blank">Visit website</a> : null}
-              </li>
-            ))}
-          </ul>
-        )}
+        <PartnerSlideshow />
       </Container>
     </section>
   );
