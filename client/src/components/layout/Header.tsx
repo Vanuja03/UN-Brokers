@@ -78,7 +78,7 @@ export function Header() {
           </HeaderBar>
         </div>
       )}
-      <HeaderBar className="items-center gap-4 py-3">
+      <HeaderBar className="items-center justify-between gap-4 py-3 lg:justify-center lg:gap-8">
         <SectionLink section="home" className="flex shrink-0 items-center gap-3">
           <Logo src={settings.logoUrl || '/logo.png'} className="h-14 w-auto shrink-0" />
           <span>
@@ -86,7 +86,7 @@ export function Header() {
             <span className="mt-1 hidden whitespace-nowrap text-xs text-slate-500 2xl:block">{settings.tagline}</span>
           </span>
         </SectionLink>
-        <nav className="ml-auto hidden min-w-0 flex-1 items-center gap-1 overflow-x-auto lg:flex [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Primary">
+        <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto lg:flex [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Primary">
           {pageSections.map((section) => (
             <SectionLink key={section.id} section={section.id} className={itemClass(active === section.id)} current={active === section.id}>
               {section.label}
