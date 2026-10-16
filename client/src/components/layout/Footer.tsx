@@ -1,5 +1,7 @@
 import { Link } from 'react-router-dom';
 import { services } from '../../content/services';
+import { quoteSectionId } from '../../content/pageSections';
+import { SectionLink } from '../common/SectionLink';
 import { useSettings } from '../../context/SettingsContext';
 import { whatsappHref } from '../../services/api';
 import { Container } from '../common/Container';
@@ -19,10 +21,10 @@ export function Footer() {
     <footer className="bg-navy-950 text-slate-200">
       <Container className="grid gap-10 py-14 md:grid-cols-2 lg:grid-cols-4">
         <div>
-          <Link to="/" className="inline-flex items-center gap-3">
+          <SectionLink section="home" className="inline-flex items-center gap-3">
             <Logo className="h-16 w-auto" />
             <span className="font-heading text-xl font-bold text-white">{settings.companyName}</span>
-          </Link>
+          </SectionLink>
           <p className="mt-3 text-sm leading-6 text-slate-300">{settings.tagline}</p>
           {socials.length > 0 ? (
             <ul className="mt-4 flex flex-wrap gap-3 text-sm">
@@ -39,14 +41,14 @@ export function Footer() {
         <div>
           <h2 className="text-sm font-semibold uppercase tracking-wider text-gold">Pages</h2>
           <ul className="mt-4 space-y-2 text-sm">
-            <li><Link to="/about">About Us</Link></li>
-            <li><Link to="/partners">Partners</Link></li>
-            <li><Link to="/testimonials">Testimonials</Link></li>
-            <li><Link to="/team">Our Team</Link></li>
-            <li><Link to="/faq">FAQ</Link></li>
+            <li><SectionLink section="about">About Us</SectionLink></li>
+            <li><SectionLink section="partners">Partners</SectionLink></li>
+            <li><SectionLink section="testimonials">Testimonials</SectionLink></li>
+            <li><SectionLink section="team">Our Team</SectionLink></li>
+            <li><SectionLink section="faq">FAQ</SectionLink></li>
             <li><Link to="/guides">Guides</Link></li>
-            <li><Link to="/contact">Contact</Link></li>
-            <li><Link to="/request-quote">Request a quote</Link></li>
+            <li><SectionLink section="contact">Contact</SectionLink></li>
+            <li><SectionLink section={quoteSectionId}>Request a quote</SectionLink></li>
           </ul>
         </div>
         <div>
@@ -57,7 +59,7 @@ export function Footer() {
             {whatsapp ? <li><a href={whatsapp} rel="noreferrer" target="_blank">WhatsApp</a></li> : null}
             {settings.address ? <li>{settings.address}</li> : null}
             {settings.officeHours ? <li>Office hours: {settings.officeHours}</li> : null}
-            <li><Link to="/contact">Contact the team</Link></li>
+            <li><SectionLink section="contact">Contact the team</SectionLink></li>
           </ul>
         </div>
       </Container>

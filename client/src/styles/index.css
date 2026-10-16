@@ -7,6 +7,10 @@
     scroll-behavior: smooth;
   }
 
+  .section-anchor {
+    scroll-margin-top: 8rem;
+  }
+
   body {
     @apply bg-white text-navy-900 antialiased;
   }

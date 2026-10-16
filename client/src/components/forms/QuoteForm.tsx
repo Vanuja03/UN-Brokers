@@ -15,6 +15,7 @@ import { labelFor } from '../../utils/labels';
 type QuoteFormProps = {
   fixedType?: InsuranceType;
   initialType?: InsuranceType;
+  selectionToken?: number;
   sourcePage?: string;
 };
 
@@ -64,7 +65,7 @@ function FieldShell({ id, label, required, error, children }: { id: string; labe
   );
 }
 
-export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps) {
+export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }: QuoteFormProps) {
   const { settings } = useSettings();
   const currency = settings.defaultCurrency || 'LKR';
   const [step, setStep] = useState(1);
@@ -73,6 +74,7 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
   const [idempotencyKey] = useState(() => crypto.randomUUID());
   const formRef = useRef<HTMLFormElement>(null);
   const skipScroll = useRef(true);
+  const seenToken = useRef<number | null>(null);
   const startingType = fixedType ?? initialType ?? 'motor';
 
   const form = useForm<FormValues>({
@@ -102,6 +104,19 @@ export function QuoteForm({ fixedType, initialType, sourcePage }: QuoteFormProps
     }
     revealForm(formRef.current, true);
   }, [step]);
+
+  useEffect(() => {
+    const next = fixedType ?? initialType;
+    if (!next) return;
+    const tokenChanged = selectionToken != null && seenToken.current !== selectionToken;
+    if (selectionToken != null) seenToken.current = selectionToken;
+    if (form.getValues('insuranceType') !== next) {
+      setValue('insuranceType', next);
+      setValue('insuranceDetails', defaultDetails(next));
+      clearErrors();
+    }
+    if (tokenChanged) setStep(1);
+  }, [fixedType, initialType, selectionToken, setValue, clearErrors, form]);
 
   function changeType(next: InsuranceType) {
     setValue('insuranceType', next);

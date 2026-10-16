@@ -1,5 +1,5 @@
 import { FormEvent, useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Seo } from '../components/common/Seo';
 import { Container } from '../components/common/Container';
@@ -8,12 +8,17 @@ import { FaqList } from '../components/common/FaqList';
 import { Photo } from '../components/common/Photo';
 import { Button } from '../components/common/Button';
 import { ServiceCard } from '../components/insurance/ServiceCard';
+import { ContactForm } from '../components/forms/ContactForm';
+import { QuoteForm } from '../components/forms/QuoteForm';
 import { aboutImage, heroImage, services } from '../content/services';
+import { quoteSectionId } from '../content/pageSections';
 import { fallbackFaqs, guides } from '../content/guides';
-import { api } from '../services/api';
+import { api, whatsappHref } from '../services/api';
 import { useSettings } from '../context/SettingsContext';
+import { useQuoteSelection } from '../context/QuoteSelectionContext';
+import { scrollToSection } from '../utils/scrollToSection';
 import type { Faq, InsuranceType, Partner, TeamMember, Testimonial } from '../types';
-import { INSURANCE_TYPES } from '../types';
+import { INSURANCE_TYPES, isInsuranceType } from '../types';
 
 export function HomePage() {
   const { settings } = useSettings();
@@ -32,7 +37,7 @@ export function HomePage() {
     <>
       <Seo title={`${settings.companyName} | Insurance quotations`} description={settings.tagline} path="/" jsonLd={jsonLd} />
       <Hero />
-      <section className="py-16">
+      <section id="insurance" className="section-anchor py-16">
         <Container>
           <SectionHeading eyebrow="Coverage" title="Insurance services" text="Each category collects different details. Choose the one that matches what you want quoted." />
           <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
@@ -47,7 +52,7 @@ export function HomePage() {
       <AboutPreview />
       <TeamPreview />
       <Education />
-      <section className="bg-navy-50 py-16">
+      <section id="faq" className="section-anchor bg-navy-50 py-16">
         <Container>
           <SectionHeading eyebrow="Questions" title="Frequently asked questions" text="These answers describe the inquiry process. They are not a policy wording." />
           <div className="mt-8"><FaqPreview /></div>
@@ -58,24 +63,30 @@ export function HomePage() {
         <Container className="flex flex-col items-start justify-between gap-6 md:flex-row md:items-center">
           <h2 className="max-w-xl text-3xl font-bold sm:text-4xl">Let's Find the Right Protection for You.</h2>
           <div className="flex flex-wrap gap-3">
-            <Button to="/request-quote" variant="gold">Request a Quote</Button>
-            <Button to="/contact" variant="outline">Contact Our Team</Button>
+            <Button to="/#get-a-quote" variant="gold">Request a Quote</Button>
+            <Button to="/#contact" variant="outline">Contact Our Team</Button>
           </div>
         </Container>
       </section>
+      <ContactSection />
+      <QuoteSection />
     </>
   );
 }
 
 function Hero() {
   const navigate = useNavigate();
+  const { choose } = useQuoteSelection();
   const [type, setType] = useState<InsuranceType>('motor');
   function submit(event: FormEvent) {
     event.preventDefault();
-    navigate(`/request-quote?type=${type}`);
+    choose(type);
+    const alreadyThere = window.location.pathname === '/' && window.location.hash === `#${quoteSectionId}`;
+    navigate({ pathname: '/', search: `?type=${type}`, hash: quoteSectionId }, { preventScrollReset: true });
+    if (alreadyThere) scrollToSection(quoteSectionId);
   }
   return (
-    <section className="relative overflow-hidden bg-navy-950 text-white">
+    <section id="home" className="section-anchor relative overflow-hidden bg-navy-950 text-white">
       <Photo src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />
       <div className="absolute inset-0 bg-gradient-to-r from-navy-950 via-navy-950/92 to-navy-900/75" />
       <Container className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:py-16">
@@ -84,8 +95,8 @@ function Hero() {
           <h1 className="mt-3 max-w-xl text-4xl font-bold leading-tight sm:text-5xl">Protection You Can Trust. Coverage That Fits Your Life.</h1>
           <p className="mt-4 max-w-xl text-base leading-7 text-slate-200 sm:text-lg">Find the right insurance solutions for your vehicle, family, property, travels, and business with guidance from a team committed to protecting what matters most.</p>
           <div className="mt-6 flex flex-wrap gap-3">
-            <Button to="/request-quote" variant="gold">Get a Free Quote</Button>
-            <Button to="/insurance" variant="outline">Explore Our Coverage</Button>
+            <Button to="/#get-a-quote" variant="gold">Get a Free Quote</Button>
+            <Button to="/#insurance" variant="outline">Explore Our Coverage</Button>
           </div>
           <p className="mt-5 max-w-xl text-sm text-slate-300">A quotation inquiry is a request for options. It does not start a policy or guarantee acceptance.</p>
         </div>
@@ -113,7 +124,7 @@ function Why() {
     ['Claims guidance, when offered', 'The team can explain how a claim is usually started. The insurer decides the claim.'],
   ];
   return (
-    <section className="bg-navy-50 py-16">
+    <section id="benefits" className="section-anchor bg-navy-50 py-16">
       <Container>
         <SectionHeading eyebrow="Why use a brokerage" title="Guidance before you buy" text="A brokerage can help you compare options. It cannot promise the lowest price, instant cover, or that a claim will be paid." />
         <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -137,7 +148,7 @@ function How() {
     ['Discuss suitable options', 'If an insurer offers terms, you can review them before deciding. Cover is not automatic.'],
   ];
   return (
-    <section className="py-16">
+    <section id="how-it-works" className="section-anchor py-16">
       <Container>
         <SectionHeading eyebrow="How it works" title="Four steps, and no cover until a policy exists" />
         <ol className="mt-10 grid gap-4 md:grid-cols-4">
@@ -159,7 +170,7 @@ function PartnersStrip() {
   useEffect(() => { api.get('/partners').then((response) => setItems(response.data.data)).catch(() => setItems([])); }, []);
   const demo = items.some((item) => item.isDemo);
   return (
-    <section className="border-y border-slate-200 bg-white py-16">
+    <section id="partners" className="section-anchor border-y border-slate-200 bg-white py-16">
       <Container>
         <SectionHeading eyebrow="Partners" title="Insurance partners and collaborators" text="Logos appear here only for relationships the business chooses to publish." />
         {demo ? <p className="mt-4 rounded-xl bg-amber-50 px-4 py-3 text-sm text-amber-950">Sample profiles are shown for demonstration. They are not real partnerships.</p> : null}
@@ -187,7 +198,7 @@ function TestimonialsStrip() {
   const [items, setItems] = useState<Testimonial[]>([]);
   useEffect(() => { api.get('/testimonials').then((response) => setItems(response.data.data)).catch(() => setItems([])); }, []);
   return (
-    <section className="py-16">
+    <section id="testimonials" className="section-anchor py-16">
       <Container>
         <SectionHeading eyebrow="Feedback" title="What customers say" text="Only approved feedback is published. Sample cards are labelled until real reviews replace them." />
         {items.length === 0 ? <p className="mt-8 text-sm text-slate-600">Customer feedback will appear here when it has been approved.</p> : (
@@ -209,7 +220,7 @@ function TestimonialsStrip() {
 function AboutPreview() {
   const { settings } = useSettings();
   return (
-    <section className="bg-navy-50 py-16">
+    <section id="about" className="section-anchor bg-navy-50 py-16">
       <Container className="grid items-center gap-8 lg:grid-cols-2">
         <div>
           <SectionHeading eyebrow="About" title={settings.companyName} text={settings.aboutIntro} />
@@ -229,7 +240,7 @@ function TeamPreview() {
   const [items, setItems] = useState<TeamMember[]>([]);
   useEffect(() => { api.get('/team').then((response) => setItems(response.data.data)).catch(() => setItems([])); }, []);
   return (
-    <section className="py-16">
+    <section id="team" className="section-anchor py-16">
       <Container>
         <SectionHeading eyebrow="People" title="Our team" text="Profiles are published by the business. Sample profiles are marked until they are replaced." />
         {items.length === 0 ? <p className="mt-8 text-sm text-slate-600">Team profiles will appear here once they are added.</p> : (
@@ -278,4 +289,46 @@ function FaqPreview() {
     }).catch(() => undefined);
   }, []);
   return <FaqList items={items.slice(0, 5)} />;
+}
+
+function ContactSection() {
+  const { settings } = useSettings();
+  const whatsapp = whatsappHref(settings.whatsappNumber);
+  return (
+    <section id="contact" className="section-anchor py-16">
+      <Container className="grid gap-10 lg:grid-cols-[0.8fr_1.2fr]">
+        <div>
+          <SectionHeading eyebrow="Contact" title="Contact us" text="Use the form for a general question. For a quotation, the quote form collects the right details for each cover type." />
+          <ul className="mt-6 space-y-3 text-sm">
+            {settings.telephone ? <li><a className="font-semibold" href={`tel:${settings.telephone}`}>{settings.telephone}</a></li> : null}
+            {settings.email ? <li><a className="font-semibold" href={`mailto:${settings.email}`}>{settings.email}</a></li> : null}
+            {whatsapp ? <li><a className="font-semibold" href={whatsapp} target="_blank" rel="noreferrer">WhatsApp</a></li> : null}
+            {settings.address ? <li>{settings.address}</li> : null}
+            {settings.officeHours ? <li>Office hours: {settings.officeHours}</li> : null}
+          </ul>
+        </div>
+        <ContactForm />
+      </Container>
+    </section>
+  );
+}
+
+function QuoteSection() {
+  const [params] = useSearchParams();
+  const { pick } = useQuoteSelection();
+  const requested = params.get('type');
+  const urlType = isInsuranceType(requested) ? requested : undefined;
+  const initialType = pick?.type ?? urlType;
+  return (
+    <section id={quoteSectionId} className="section-anchor bg-navy-50 py-16">
+      <Container>
+        <div className="mx-auto max-w-3xl">
+          <SectionHeading eyebrow="Quotation" title="Get a quote" text="Choose a category and add the details that apply. You will receive a reference number when the inquiry is saved. Submitting this form does not start cover." />
+          <div className="mt-8">
+            <QuoteForm initialType={initialType} selectionToken={pick?.token} sourcePage="/" />
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
 }
