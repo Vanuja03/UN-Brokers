@@ -1,7 +1,7 @@
 export const defaultAbout = {
   intro:
-    'UN Insurance Brokers helps people and businesses request insurance quotations and understand the kinds of cover that may suit their vehicle, travel, property, or work. The team explains options in plain language and supports you through the inquiry.',
-  mission: 'To help customers understand their insurance options and request quotations with clear, practical guidance.',
+    'Established in 2011, UN Insurance Brokers (Pvt) Ltd is a registered insurance broking company in Sri Lanka, working in compliance with the Insurance Regulatory Commission of Sri Lanka.',
+  mission: 'To protect our clients’ interests, deliver value-added insurance services, and contribute to the continued development of Sri Lanka’s insurance industry.',
   vision: 'To be a brokerage people return to when their cover needs change.',
 };
 

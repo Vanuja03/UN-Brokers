@@ -11,7 +11,8 @@ import { ServiceCard } from '../components/insurance/ServiceCard';
 import { PartnerSlideshow } from '../components/partners/PartnerSlideshow';
 import { ContactForm } from '../components/forms/ContactForm';
 import { QuoteForm } from '../components/forms/QuoteForm';
-import { aboutImage, heroImage, services } from '../content/services';
+import { heroImage, services } from '../content/services';
+import { AboutStory } from '../components/about/AboutStory';
 import { quoteSectionId } from '../content/pageSections';
 import { fallbackFaqs, guides } from '../content/guides';
 import { api, whatsappHref } from '../services/api';
@@ -203,16 +204,8 @@ function AboutPreview() {
   const { settings } = useSettings();
   return (
     <section id="about" className="section-anchor bg-navy-50 py-16">
-      <Container className="grid items-center gap-8 lg:grid-cols-2">
-        <div>
-          <SectionHeading eyebrow="About" title={settings.companyName} text={settings.aboutIntro} />
-          <div className="mt-6 grid gap-4 sm:grid-cols-2">
-            <article><h3 className="font-bold">Mission</h3><p className="mt-1 text-sm leading-6 text-slate-600">{settings.mission}</p></article>
-            <article><h3 className="font-bold">Vision</h3><p className="mt-1 text-sm leading-6 text-slate-600">{settings.vision}</p></article>
-          </div>
-          <Link to="/about" className="mt-6 inline-flex text-sm font-semibold underline">More about us</Link>
-        </div>
-        <Photo src={aboutImage} alt="Professionals talking together in an office" className="h-80 w-full rounded-3xl object-cover" />
+      <Container>
+        <AboutStory title={settings.companyName} />
       </Container>
     </section>
   );
