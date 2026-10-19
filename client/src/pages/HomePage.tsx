@@ -118,18 +118,16 @@ function Hero() {
 
 function Why() {
   const items = [
-    ['Personalized insurance guidance', 'The inquiry is reviewed against the cover type you chose, rather than a single generic form.'],
-    ['Help finding suitable options', 'The team can approach insurers it works with and explain the differences in plain language.'],
-    ['Clear policy explanations', 'Limits, excesses, and exclusions should be understood before you decide.'],
-    ['Support through the quotation', 'You can be asked for missing details before anything is treated as final.'],
-    ['Help with documents', 'The team can tell you which details an insurer still needs.'],
-    ['Claims guidance, when offered', 'The team can explain how a claim is usually started. The insurer decides the claim.'],
+    ['Specially negotiated insurance rates', 'We negotiate with insurance companies for competitive premiums and special discounts, so clients can secure suitable cover at attractive prices.'],
+    ['Quotations and clear comparisons', 'We explain the benefits, cover, terms, and conditions of different insurers, then set the options out in detailed quotations and comparisons of premiums, benefits, and other conditions.'],
+    ['Personalized guidance', 'Our experienced team discusses each client’s requirements and recommends options that fit their needs, budget, and preferred level of protection.'],
+    ['Dedicated claims assistance', 'Our team stays with clients through the claims process, coordinating with insurers, following up, and negotiating where appropriate to help reach a fair and timely settlement.'],
   ];
   return (
     <section id="benefits" className="section-anchor bg-navy-50 py-16">
       <Container>
-        <SectionHeading eyebrow="Why use a brokerage" title="Guidance before you buy" text="A brokerage can help you compare options. It cannot promise the lowest price, instant cover, or that a claim will be paid." />
-        <div className="mt-10 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        <SectionHeading eyebrow="Benefits" title="Why clients work with us" text="We negotiate with insurers, compare the options in writing, and stay involved if a claim needs to be made." />
+        <div className="mt-10 grid gap-4 md:grid-cols-2">
           {items.map(([title, text]) => (
             <article key={title} className="rounded-2xl border border-slate-200 bg-white p-5">
               <h3 className="font-bold text-navy-900">{title}</h3>
