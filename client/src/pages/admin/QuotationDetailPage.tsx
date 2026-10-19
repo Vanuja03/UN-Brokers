@@ -92,6 +92,10 @@ export function QuotationDetailPage() {
         <div>
           <h1 className="text-3xl font-bold">{quote.referenceNumber}</h1>
           <p className="text-sm text-slate-600">{serviceMap[quote.insuranceType]?.name} · {STATUS_LABELS[quote.status]}</p>
+          <p className="mt-1 text-sm text-slate-600">Submitted {new Date(quote.createdAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Colombo' })}</p>
+          {quote.insuranceType === 'motor' || quote.insuranceType === 'motor-third-party' ? (
+            <Link to={`/admin/motor-quotations/new?inquiry=${quote._id}`} className="mt-3 inline-flex rounded-full bg-gold px-4 py-2 text-sm font-semibold text-navy-950">Prepare customer PDF</Link>
+          ) : null}
         </div>
         <div className="flex gap-2">
           <a className="rounded-full border px-4 py-2 text-sm" href={`mailto:${quote.email}`}>Email customer</a>

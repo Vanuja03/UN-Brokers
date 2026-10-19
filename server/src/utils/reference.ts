@@ -1,6 +1,6 @@
 import { createHash, randomBytes } from 'node:crypto';
 
-export function makeReference(prefix: 'UNB' | 'CT') {
+export function makeReference(prefix: 'UNB' | 'CT' | 'MQ') {
   const date = new Date().toISOString().slice(0, 10).replace(/-/g, '');
   const suffix = randomBytes(3).toString('hex').toUpperCase();
   return `${prefix}-${date}-${suffix}`;

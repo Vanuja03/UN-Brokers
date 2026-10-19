@@ -13,6 +13,7 @@ import { ContactForm } from '../components/forms/ContactForm';
 import { QuoteForm } from '../components/forms/QuoteForm';
 import { heroImage, services } from '../content/services';
 import { AboutStory } from '../components/about/AboutStory';
+import { ScrollCoverScene } from '../components/home/ScrollCoverScene';
 import { quoteSectionId } from '../content/pageSections';
 import { fallbackFaqs, guides } from '../content/guides';
 import { api, whatsappHref } from '../services/api';
@@ -39,6 +40,7 @@ export function HomePage() {
     <>
       <Seo title={`${settings.companyName} | Insurance quotations`} description={settings.tagline} path="/" jsonLd={jsonLd} />
       <Hero />
+      <ScrollCoverScene />
       <section id="insurance" className="section-anchor py-16">
         <Container>
           <SectionHeading eyebrow="Coverage" title="Insurance services" text="Each category collects different details. Choose the one that matches what you want quoted." />

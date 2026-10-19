@@ -20,6 +20,8 @@ import { LoginPage } from '../pages/admin/LoginPage';
 import { DashboardPage } from '../pages/admin/DashboardPage';
 import { QuotationsPage } from '../pages/admin/QuotationsPage';
 import { QuotationDetailPage } from '../pages/admin/QuotationDetailPage';
+import { MotorQuotationsPage } from '../pages/admin/MotorQuotationsPage';
+import { MotorQuotationFormPage } from '../pages/admin/MotorQuotationFormPage';
 import { ContactsPage } from '../pages/admin/ContactsPage';
 import { ContentPage } from '../pages/admin/ContentPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
@@ -54,6 +56,9 @@ export function AppRoutes() {
           <Route path="dashboard" element={<DashboardPage />} />
           <Route path="quotations" element={<QuotationsPage />} />
           <Route path="quotations/:id" element={<QuotationDetailPage />} />
+          <Route path="motor-quotations" element={<MotorQuotationsPage />} />
+          <Route path="motor-quotations/new" element={<MotorQuotationFormPage />} />
+          <Route path="motor-quotations/:id" element={<MotorQuotationFormPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="content" element={<ContentPage />} />
           <Route path="settings" element={<SettingsPage />} />

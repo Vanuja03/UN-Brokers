@@ -37,6 +37,13 @@ import {
   updateTeamMember,
   updateTestimonial,
 } from '../controllers/contentController.js';
+import {
+  createMotorQuotation,
+  downloadMotorQuotation,
+  getMotorQuotation,
+  listMotorQuotations,
+  updateMotorQuotation,
+} from '../controllers/motorQuotationController.js';
 import { adminSettings, createStaff, listAudit, listStaff, publicSettings, updateSettings, updateStaff } from '../controllers/settingsController.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { requireCsrf } from '../middleware/csrf.js';
@@ -70,6 +77,12 @@ router.get('/quotes/:id', requireAuth, getQuote);
 router.patch('/quotes/:id/status', ...staff, updateQuoteStatus);
 router.patch('/quotes/:id', ...staff, updateQuote);
 router.delete('/quotes/:id', ...staff, archiveQuote);
+
+router.get('/motor-quotations', requireAuth, listMotorQuotations);
+router.post('/motor-quotations', ...staff, createMotorQuotation);
+router.get('/motor-quotations/:id/pdf', requireAuth, downloadMotorQuotation);
+router.get('/motor-quotations/:id', requireAuth, getMotorQuotation);
+router.patch('/motor-quotations/:id', ...staff, updateMotorQuotation);
 
 router.post('/contacts', inquiryLimiter, createContact);
 router.get('/contacts', requireAuth, listContacts);

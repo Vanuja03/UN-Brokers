@@ -76,7 +76,7 @@ export function QuotationsPage() {
               </div>
               <div className="text-right text-sm">
                 <p className="font-semibold">{STATUS_LABELS[row.status]}</p>
-                <p className="text-slate-500">{new Date(row.createdAt).toLocaleDateString()}</p>
+                <p className="text-slate-500">{new Date(row.createdAt).toLocaleString('en-GB', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Colombo' })}</p>
               </div>
             </div>
           </article>

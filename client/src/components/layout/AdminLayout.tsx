@@ -7,6 +7,7 @@ import { useAuth } from '../../context/AuthContext';
 const links = [
   ['/admin/dashboard', 'Overview'],
   ['/admin/quotations', 'Quotations'],
+  ['/admin/motor-quotations', 'Motor quotations'],
   ['/admin/contacts', 'Messages'],
   ['/admin/content', 'Content'],
   ['/admin/settings', 'Settings'],
