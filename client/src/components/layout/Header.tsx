@@ -1,7 +1,8 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Mail, Menu, Phone, X } from 'lucide-react';
 import { pageSections, quoteSectionId } from '../../content/pageSections';
+import { heroImage } from '../../content/services';
 import { useSettings } from '../../context/SettingsContext';
 import { useActiveSection } from '../../hooks/useActiveSection';
 import { Logo } from '../common/Logo';
@@ -18,7 +19,19 @@ export function Header() {
   const [open, setOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
   const menuId = useId();
+
+  useLayoutEffect(() => {
+    document.documentElement.style.setProperty('--home-photo', `url("${heroImage}")`);
+    const node = headerRef.current;
+    if (!node) return;
+    const apply = () => document.documentElement.style.setProperty('--header-h', `${node.offsetHeight}px`);
+    apply();
+    const observer = new ResizeObserver(apply);
+    observer.observe(node);
+    return () => observer.disconnect();
+  }, [open, settings.telephone, settings.email]);
 
   useEffect(() => {
     const link = document.querySelector('nav[aria-label="Primary"] a[aria-current="true"]');
@@ -63,15 +76,15 @@ export function Header() {
   }, [open]);
 
   function itemClass(current: boolean) {
-    return `whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-medium ${current ? 'bg-navy-50 text-navy-900' : 'text-slate-700 hover:text-navy-900'}`;
+    return `whitespace-nowrap rounded-full px-2.5 py-2 text-sm font-medium ${current ? 'bg-white/15 text-white' : 'text-white/85 hover:bg-white/10 hover:text-white'}`;
   }
 
   const quoteCurrent = active === quoteSectionId;
 
   return (
-    <header className="sticky top-0 z-40 border-b border-slate-200 bg-white/95 backdrop-blur">
+    <header ref={headerRef} className="home-surface sticky top-0 z-40 border-b border-white/10 text-white">
       {(settings.telephone || settings.email) && (
-        <div className="bg-navy-900 text-sm text-white">
+        <div className="text-sm text-white">
           <HeaderBar className="items-center justify-end gap-4 overflow-x-auto py-2">
             {settings.telephone ? <a className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap hover:text-gold" href={`tel:${settings.telephone}`}><Phone className="h-4 w-4" aria-hidden="true" />{settings.telephone}</a> : null}
             {settings.email ? <a className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap hover:text-gold" href={`mailto:${settings.email}`}><Mail className="h-4 w-4" aria-hidden="true" />{settings.email}</a> : null}
@@ -82,8 +95,8 @@ export function Header() {
         <SectionLink section="home" className="flex shrink-0 items-center gap-3">
           <Logo src={settings.logoUrl || '/logo.png'} className="h-14 w-auto shrink-0" />
           <span>
-            <span className="block whitespace-nowrap font-heading text-lg font-bold leading-none text-navy-900">{settings.companyName}</span>
-            <span className="mt-1 hidden whitespace-nowrap text-xs text-slate-500 2xl:block">{settings.tagline}</span>
+            <span className="block whitespace-nowrap font-heading text-lg font-bold leading-none text-white">{settings.companyName}</span>
+            <span className="mt-1 hidden whitespace-nowrap text-xs text-white/70 2xl:block">{settings.tagline}</span>
           </span>
         </SectionLink>
         <nav className="hidden min-w-0 items-center gap-1 overflow-x-auto lg:flex [scrollbar-width:none] [&::-webkit-scrollbar]:hidden" aria-label="Primary">
@@ -94,20 +107,20 @@ export function Header() {
           ))}
         </nav>
         <div className="flex shrink-0 items-center gap-2">
-          <SectionLink section={quoteSectionId} className={`hidden whitespace-nowrap rounded-full px-4 py-2.5 text-sm font-semibold sm:inline-flex ${quoteCurrent ? 'bg-gold text-navy-950 ring-2 ring-navy-900 ring-offset-2' : 'bg-gold text-navy-950'}`} current={quoteCurrent}>
+          <SectionLink section={quoteSectionId} className={`hidden whitespace-nowrap rounded-full bg-gold px-4 py-2.5 text-sm font-semibold text-navy-950 sm:inline-flex ${quoteCurrent ? 'ring-2 ring-white/70' : ''}`} current={quoteCurrent}>
             Get a Quote
           </SectionLink>
-          <button ref={buttonRef} type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-slate-300 lg:hidden" aria-expanded={open} aria-controls={menuId} onClick={() => setOpen((value) => !value)}>
+          <button ref={buttonRef} type="button" className="inline-flex h-11 w-11 items-center justify-center rounded-full border border-white/40 text-white lg:hidden" aria-expanded={open} aria-controls={menuId} onClick={() => setOpen((value) => !value)}>
             {open ? <X aria-hidden="true" /> : <Menu aria-hidden="true" />}
             <span className="sr-only">{open ? 'Close menu' : 'Open menu'}</span>
           </button>
         </div>
       </HeaderBar>
       {open ? (
-        <div id={menuId} ref={menuRef} className="border-t border-slate-200 bg-white lg:hidden" role="dialog" aria-modal="true" aria-label="Mobile navigation">
+        <div id={menuId} ref={menuRef} className="border-t border-white/10 bg-navy-950 lg:hidden" role="dialog" aria-modal="true" aria-label="Mobile navigation">
           <HeaderBar className="max-h-[calc(100vh-5rem)] flex-col items-stretch gap-1 overflow-y-auto py-4">
             {pageSections.map((section) => (
-              <SectionLink key={section.id} section={section.id} className={`rounded-xl px-3 py-3 text-base font-medium ${active === section.id ? 'bg-navy-50 text-navy-900' : ''}`} current={active === section.id} onNavigate={() => setOpen(false)}>
+              <SectionLink key={section.id} section={section.id} className={`rounded-xl px-3 py-3 text-base font-medium text-white ${active === section.id ? 'bg-white/15' : ''}`} current={active === section.id} onNavigate={() => setOpen(false)}>
                 {section.label}
               </SectionLink>
             ))}

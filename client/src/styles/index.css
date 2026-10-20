@@ -11,6 +11,29 @@
     scroll-margin-top: 8rem;
   }
 
+  .quote-slide-active {
+    animation: quote-slide 4.6s ease-out forwards;
+  }
+
+  @keyframes quote-slide {
+    from { transform: scale(1); }
+    to { transform: scale(1.08); }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .quote-slide-active {
+      animation: none;
+    }
+  }
+
+  .home-surface {
+    background-color: #07182e;
+    background-image: linear-gradient(90deg, rgba(7, 24, 46, 0.96) 0%, rgba(7, 24, 46, 0.9) 46%, rgba(11, 37, 69, 0.78) 100%), var(--home-photo, none);
+    background-size: cover;
+    background-position: center top;
+    background-attachment: fixed;
+  }
+
   .partner-stage {
     --partner-gap: 28px;
     --partner-card-w: min(18.75rem, calc((100% - 2 * var(--partner-gap)) / 3));

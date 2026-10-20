@@ -1,17 +1,16 @@
-import { FormEvent, useEffect, useState } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link, useSearchParams } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { Seo } from '../components/common/Seo';
 import { Container } from '../components/common/Container';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FaqList } from '../components/common/FaqList';
-import { Photo } from '../components/common/Photo';
 import { Button } from '../components/common/Button';
 import { ServiceCard } from '../components/insurance/ServiceCard';
 import { PartnerSlideshow } from '../components/partners/PartnerSlideshow';
 import { ContactForm } from '../components/forms/ContactForm';
 import { QuoteForm } from '../components/forms/QuoteForm';
-import { heroImage, services } from '../content/services';
+import { services } from '../content/services';
 import { AboutStory } from '../components/about/AboutStory';
 import { ScrollCoverScene } from '../components/home/ScrollCoverScene';
 import { quoteSectionId } from '../content/pageSections';
@@ -19,7 +18,6 @@ import { fallbackFaqs, guides } from '../content/guides';
 import { api, whatsappHref } from '../services/api';
 import { useSettings } from '../context/SettingsContext';
 import { useQuoteSelection } from '../context/QuoteSelectionContext';
-import { scrollToSection } from '../utils/scrollToSection';
 import type { Faq, InsuranceType, TeamMember, Testimonial } from '../types';
 import { INSURANCE_TYPES, isInsuranceType } from '../types';
 
@@ -78,22 +76,22 @@ export function HomePage() {
   );
 }
 
+const coverArt: Record<InsuranceType, string> = {
+  motor: '/covers/cover-motor.png',
+  'motor-third-party': '/covers/cover-third-party.png',
+  travel: '/covers/cover-travel.png',
+  fire: '/covers/cover-fire.png',
+  'dwelling-fire': '/covers/cover-home.png',
+  'workers-compensation': '/covers/cover-workers.png',
+  'money-in-transit': '/covers/cover-money.png',
+  'personal-accident': '/covers/cover-personal.png',
+  'title-insurance': '/covers/cover-title.png',
+};
+
 function Hero() {
-  const navigate = useNavigate();
-  const { choose } = useQuoteSelection();
-  const [type, setType] = useState<InsuranceType>('motor');
-  function submit(event: FormEvent) {
-    event.preventDefault();
-    choose(type);
-    const alreadyThere = window.location.pathname === '/' && window.location.hash === `#${quoteSectionId}`;
-    navigate({ pathname: '/', search: `?type=${type}`, hash: quoteSectionId }, { preventScrollReset: true });
-    if (alreadyThere) scrollToSection(quoteSectionId);
-  }
   return (
-    <section id="home" className="section-anchor relative overflow-hidden bg-navy-950 text-white">
-      <Photo src={heroImage} alt="" className="absolute inset-0 h-full w-full object-cover opacity-30" />
-      <div className="absolute inset-0 bg-gradient-to-r from-navy-950 via-navy-950/92 to-navy-900/75" />
-      <Container className="relative grid items-center gap-10 py-14 lg:grid-cols-[1.1fr_0.9fr] lg:py-16">
+    <section id="home" className="home-surface section-anchor relative -mt-[var(--header-h,7.5rem)] scroll-mt-0 overflow-hidden pt-[var(--header-h,7.5rem)] text-white">
+      <Container className="relative grid items-center gap-10 pb-24 pt-10 lg:grid-cols-[1.1fr_0.9fr] lg:pb-28 lg:pt-12">
         <div>
           <p className="text-sm font-semibold uppercase tracking-[0.16em] text-gold">Insurance brokerage</p>
           <h1 className="mt-3 max-w-xl text-4xl font-bold leading-tight sm:text-5xl">Protection You Can Trust. Coverage That Fits Your Life.</h1>
@@ -104,17 +102,63 @@ function Hero() {
           </div>
           <p className="mt-5 max-w-xl text-sm text-slate-300">A quotation inquiry is a request for options. It does not start a policy or guarantee acceptance.</p>
         </div>
-        <form onSubmit={submit} className="rounded-2xl bg-white p-5 text-navy-900 shadow-card sm:p-6">
-          <h2 className="text-xl font-bold">Start a quotation inquiry</h2>
-          <label htmlFor="hero-type" className="mt-4 block text-sm font-medium">Insurance category</label>
-          <select id="hero-type" className="field mt-1.5" value={type} onChange={(event) => setType(event.target.value as InsuranceType)}>
-            {services.map((service) => <option key={service.slug} value={service.slug}>{service.name}</option>)}
-          </select>
-          <button type="submit" className="mt-4 w-full rounded-full bg-gold px-5 py-3 text-sm font-semibold text-navy-950">Continue</button>
-          <p className="mt-3 text-xs leading-5 text-slate-500">Takes a few minutes. No payment is collected.</p>
-        </form>
+        <TypeSlides />
       </Container>
+      <div className="pointer-events-none absolute inset-x-0 bottom-0 text-navy-50" aria-hidden="true">
+        <svg viewBox="0 0 1440 80" preserveAspectRatio="none" className="block h-16 w-full sm:h-20">
+          <path d="M0 80V48C260 48 430 0 720 0s460 48 720 48v32H0Z" fill="currentColor" />
+        </svg>
+      </div>
     </section>
+  );
+}
+
+function TypeSlides() {
+  const [index, setIndex] = useState(0);
+  const [paused, setPaused] = useState(false);
+  const [reduced, setReduced] = useState(false);
+  const slides = services.map((service) => ({ slug: service.slug, name: service.name, src: coverArt[service.slug] }));
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const apply = () => setReduced(media.matches);
+    apply();
+    media.addEventListener('change', apply);
+    return () => media.removeEventListener('change', apply);
+  }, []);
+
+  useEffect(() => {
+    if (reduced || paused) return;
+    const timer = window.setInterval(() => setIndex((current) => (current + 1) % slides.length), 4200);
+    return () => window.clearInterval(timer);
+  }, [paused, reduced, slides.length]);
+
+  return (
+    <div className="relative h-72 sm:h-80 lg:h-[24rem]">
+      {slides.map((slide, slideIndex) => (
+        <img
+          key={slide.slug}
+          src={slide.src}
+          alt=""
+          className={`absolute inset-0 h-full w-full object-contain motion-safe:transition-opacity motion-safe:duration-700 ${slideIndex === index ? 'quote-slide-active opacity-100' : 'opacity-0'}`}
+        />
+      ))}
+      <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-navy-950/75 to-transparent px-5 py-4">
+        <p className="text-sm font-semibold text-white">{slides[index].name}</p>
+      </div>
+      <div className="absolute right-3 top-3 flex max-w-[60%] flex-wrap justify-end gap-1.5">
+        {slides.map((slide, slideIndex) => (
+          <button
+            key={slide.slug}
+            type="button"
+            className={`h-2.5 w-2.5 rounded-full ${slideIndex === index ? 'bg-gold' : 'bg-white/80'}`}
+            aria-label={`Show ${slide.name}`}
+            aria-current={slideIndex === index ? 'true' : undefined}
+            onClick={() => { setPaused(true); setIndex(slideIndex); }}
+          />
+        ))}
+      </div>
+    </div>
   );
 }
 

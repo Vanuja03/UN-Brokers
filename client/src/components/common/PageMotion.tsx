@@ -32,6 +32,7 @@ function decorate(root: HTMLElement) {
   if (prefersReducedMotion()) return;
   const blocks = [...root.children].filter((node): node is HTMLElement => node instanceof HTMLElement);
   blocks.forEach((block) => {
+    if (block.id === 'home') return;
     assign(block, 'fade-up', 0);
     block.querySelectorAll('ul.grid > li, ol.grid > li, .grid > article, .grid > a').forEach((card, index) => {
       if (card instanceof HTMLElement) assign(card, 'fade-up', Math.min(index, 5) * 70);
