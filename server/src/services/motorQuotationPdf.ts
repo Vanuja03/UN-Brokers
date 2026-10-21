@@ -2,6 +2,8 @@ import { existsSync } from 'node:fs';
 import path from 'node:path';
 import PDFDocument from 'pdfkit';
 
+type PdfDoc = InstanceType<typeof PDFDocument>;
+
 const navy = '#0b2545';
 const gold = '#FFB900';
 const mist = '#f4f7fb';
@@ -33,12 +35,37 @@ export type QuotationPdfInput = {
   address: string;
 };
 
-function logoPath() {
+function assetPath(...parts: string[]) {
+  const relative = path.join(...parts);
   const candidates = [
-    path.resolve(process.cwd(), 'client/public/logo.png'),
-    path.resolve(process.cwd(), '../client/public/logo.png'),
+    path.resolve(process.cwd(), 'client', 'public', relative),
+    path.resolve(process.cwd(), '..', 'client', 'public', relative),
   ];
   return candidates.find((candidate) => existsSync(candidate));
+}
+
+function paintWatermark(doc: PdfDoc) {
+  const mark = assetPath('logo.png');
+  if (!mark) return;
+  const size = 320;
+  doc.save();
+  doc.opacity(0.08);
+  doc.image(mark, (doc.page.width - size) / 2, (doc.page.height - size) / 2, { fit: [size, size] });
+  doc.restore();
+}
+
+function headerArt(doc: PdfDoc, file: string | undefined, x: number, y: number, size: number) {
+  doc.roundedRect(x, y, size, size, 10).fill('#ffffff');
+  if (!file) return;
+  doc.image(file, x + 4, y + 4, { fit: [size - 8, size - 8], align: 'center', valign: 'center' });
+}
+
+function headerPhoto(doc: PdfDoc, file: string | undefined, x: number, y: number, photoWidth: number, photoHeight: number) {
+  doc.save();
+  doc.roundedRect(x, y, photoWidth, photoHeight, 8).clip();
+  if (file) doc.image(file, x, y, { cover: [photoWidth, photoHeight], align: 'center', valign: 'center' });
+  else doc.rect(x, y, photoWidth, photoHeight).fill('#ffffff');
+  doc.restore();
 }
 
 function displayDate(value: string) {
@@ -69,22 +96,33 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
     const left = 28;
     const width = pageWidth - 56;
     const cover = input.insuranceType === 'motor' ? 'Motor insurance' : 'Third-party motor insurance';
+    const headerHeight = 92;
+    const artY = 10;
+    const logoSize = 72;
+    const photoWidth = 168;
+    const photoHeight = 72;
+    const logoX = 14;
+    const photoX = pageWidth - photoWidth - 14;
 
-    doc.rect(0, 0, pageWidth, 78).fill(navy);
-    doc.rect(0, 78, pageWidth, 4).fill(gold);
-    const mark = logoPath();
-    let titleX = left;
-    if (mark) {
-      doc.image(mark, left, 14, { fit: [50, 50] });
-      titleX = left + 60;
-    }
-    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(16).text(input.companyName || 'UN Insurance Brokers', titleX, 18, { width: 420 });
-    doc.fillColor(gold).font('Helvetica-Bold').fontSize(11).text('QUOTATION', titleX, 40);
-    doc.fillColor('#ffffff').font('Helvetica').fontSize(10).text(cover, titleX, 56);
-    doc.font('Helvetica').fontSize(9).text(displayDate(input.quotationDate), pageWidth - 180, 24, { width: 150, align: 'right' });
-    doc.text(input.referenceNumber, pageWidth - 180, 40, { width: 150, align: 'right' });
+    paintWatermark(doc);
+    doc.rect(0, 0, pageWidth, headerHeight).fill(navy);
+    doc.rect(0, headerHeight, pageWidth, 4).fill(gold);
+    headerArt(doc, assetPath('logo.png'), logoX, artY, logoSize);
+    headerPhoto(doc, assetPath('covers', 'header-bmw.jpg'), photoX, artY, photoWidth, photoHeight);
 
-    let y = 98;
+    const titleX = logoX + logoSize + 12;
+    const titleWidth = photoX - 12 - titleX;
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(16).text(input.companyName || 'UN Insurance Brokers', titleX, 18, {
+      width: titleWidth,
+      align: 'center',
+    });
+    doc.fillColor(gold).font('Helvetica-Bold').fontSize(11).text('QUOTATION', titleX, 40, { width: titleWidth, align: 'center' });
+    doc.fillColor('#ffffff').font('Helvetica').fontSize(9).text(`${cover}   ·   ${displayDate(input.quotationDate)}   ·   ${input.referenceNumber}`, titleX, 58, {
+      width: titleWidth,
+      align: 'center',
+    });
+
+    let y = headerHeight + 18;
     doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text(input.customerName, left, y);
     y += 18;
     const facts = [
@@ -145,6 +183,7 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
       const rowHeight = Math.min(42, Math.max(18, textHeight + 8));
       if (y + rowHeight > doc.page.height - 46) {
         doc.addPage({ size: 'A4', layout: 'landscape', margin: 28 });
+        paintWatermark(doc);
         y = 36;
         drawHeader();
       }

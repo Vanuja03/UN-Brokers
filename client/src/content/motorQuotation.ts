@@ -39,6 +39,21 @@ const comprehensiveRows = [
   'Click & Go',
 ];
 
+export const yesNoBenefitLabels = [
+  'Fire / theft / accidental damage',
+  'Malicious act',
+  'Flood and natural perils',
+  'Strike, riot and civil commotion',
+  'Terrorism',
+  'Click & Go',
+] as const;
+
+const yesNoBenefitSet = new Set<string>(yesNoBenefitLabels);
+
+export function isYesNoBenefit(label: string) {
+  return yesNoBenefitSet.has(label);
+}
+
 const thirdPartyRows = [
   'Total premium with taxes',
   'Third party bodily injury',

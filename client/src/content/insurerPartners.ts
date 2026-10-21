@@ -9,7 +9,6 @@ export const insurerPartners: InsurerLogo[] = [
   { name: 'Ceylinco VIP', logo: '/partners/ceylinco-vip.png', website: 'https://www.ceylinco-insurance.com/' },
   { name: 'Fairfirst Insurance', logo: '/partners/fairfirst.png', website: 'https://www.fairfirst.lk/' },
   { name: 'LOLC General Insurance', logo: '/partners/lolc.svg', website: 'https://www.lolcgeneral.lk/' },
-  { name: 'Union Assurance', logo: '/partners/union.png', website: 'https://unionassurance.com/' },
   { name: 'Allianz Insurance', logo: '/partners/allianz.svg', website: 'https://www.allianz.lk/' },
   { name: 'HNB General Insurance', logo: '/partners/hnb.png', website: 'https://www.hnbgeneral.com/' },
   { name: 'Continental Life', logo: '/partners/continental-life.png', website: 'https://cilankalife.com/' },

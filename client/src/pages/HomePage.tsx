@@ -8,6 +8,7 @@ import { FaqList } from '../components/common/FaqList';
 import { Button } from '../components/common/Button';
 import { ServiceCard } from '../components/insurance/ServiceCard';
 import { PartnerSlideshow } from '../components/partners/PartnerSlideshow';
+import { FeedbackSlideshow } from '../components/feedback/FeedbackSlideshow';
 import { ContactForm } from '../components/forms/ContactForm';
 import { QuoteForm } from '../components/forms/QuoteForm';
 import { services } from '../content/services';
@@ -18,7 +19,7 @@ import { fallbackFaqs, guides } from '../content/guides';
 import { api, whatsappHref } from '../services/api';
 import { useSettings } from '../context/SettingsContext';
 import { useQuoteSelection } from '../context/QuoteSelectionContext';
-import type { Faq, InsuranceType, TeamMember, Testimonial } from '../types';
+import type { Faq, InsuranceType, TeamMember } from '../types';
 import { INSURANCE_TYPES, isInsuranceType } from '../types';
 
 export function HomePage() {
@@ -222,23 +223,10 @@ function PartnersStrip() {
 }
 
 function TestimonialsStrip() {
-  const [items, setItems] = useState<Testimonial[]>([]);
-  useEffect(() => { api.get('/testimonials').then((response) => setItems(response.data.data)).catch(() => setItems([])); }, []);
   return (
     <section id="testimonials" className="section-anchor py-16">
       <Container>
-        <SectionHeading eyebrow="Feedback" title="What customers say" text="Only approved feedback is published. Sample cards are labelled until real reviews replace them." />
-        {items.length === 0 ? <p className="mt-8 text-sm text-slate-600">Customer feedback will appear here when it has been approved.</p> : (
-          <ul className="mt-8 grid gap-4 md:grid-cols-3">
-            {items.slice(0, 3).map((item) => (
-              <li key={item._id} className="rounded-2xl border border-slate-200 p-5">
-                <p className="text-sm leading-6 text-slate-700">“{item.review}”</p>
-                <p className="mt-4 font-semibold">{item.customerDisplayName}</p>
-                <p className="text-xs text-slate-500">{item.isDemo ? 'Sample' : item.verified ? 'Verified review' : item.insuranceType}</p>
-              </li>
-            ))}
-          </ul>
-        )}
+        <FeedbackSlideshow />
       </Container>
     </section>
   );

@@ -13,6 +13,7 @@ export const emailSchema = z.string().trim().email('Enter a valid email address.
 
 const textField = (min: number, max: number) => z.string().trim().min(min, 'This field is required.').max(max);
 const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(''));
+const optionalDate = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date.').or(z.literal('')).optional();
 const positiveAmount = z.coerce.number({ invalid_type_error: 'Enter a valid amount.' }).positive('Enter an amount greater than zero.');
 const optionalAmount = z.preprocess((value) => (value === '' || value === null || value === undefined ? undefined : value), positiveAmount.optional());
 
@@ -26,8 +27,10 @@ const vehicleBase = {
   ownershipStatus: z.enum(['owned', 'financed', 'leased', 'other']),
   estimatedMarketValue: positiveAmount,
   vehicleUsage: z.enum(['private', 'business', 'commercial-passenger', 'goods-transport', 'other']),
-  fuelType: z.enum(['petrol', 'diesel', 'hybrid', 'electric', 'other']),
+  fuelType: z.enum(['petrol', 'diesel', 'electric', 'phev', 'hybrid', 'other']),
+  preferredCoverage: z.enum(['full-insurance', 'third-party', 'unsure', 'comprehensive', 'third-party-fire-theft']),
   existingPolicyRenewal: optionalText(500),
+  existingPolicyRenewalDate: optionalDate,
   additionalNotes: optionalText(2000),
 };
 
@@ -43,10 +46,7 @@ function withRegistration<T extends z.ZodRawShape>(shape: T) {
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date.');
 
 export const detailSchemas = {
-  motor: withRegistration({
-    ...vehicleBase,
-    preferredCoverage: z.enum(['comprehensive', 'third-party', 'third-party-fire-theft', 'unsure']),
-  }),
+  motor: withRegistration({ ...vehicleBase }),
   'motor-third-party': withRegistration({ ...vehicleBase, liabilityNotes: optionalText(1000) }),
   travel: z
     .object({

@@ -29,6 +29,11 @@ describe('motor customer quotations', () => {
     expect(created.status).toBe(201);
     expect(created.body.data.referenceNumber).toMatch(/^MQ-\d{8}-[A-F0-9]{6}$/);
 
+    const preview = await agent.post('/api/motor-quotations/preview').set('X-CSRF-Token', csrf).send(comparison);
+    expect(preview.status).toBe(200);
+    expect(preview.headers['content-type']).toMatch(/application\/pdf/);
+    expect(String(preview.headers['content-disposition'])).toMatch(/inline/);
+
     const pdf = await agent.get(`/api/motor-quotations/${created.body.data._id}/pdf`);
     expect(pdf.status).toBe(200);
     expect(pdf.headers['content-type']).toMatch(/application\/pdf/);

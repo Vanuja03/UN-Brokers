@@ -26,6 +26,12 @@ export function Footer() {
             <span className="font-heading text-xl font-bold text-white">{settings.companyName}</span>
           </SectionLink>
           <p className="mt-3 text-sm leading-6 text-slate-300">{settings.tagline}</p>
+          <ul className="mt-4 space-y-1.5 text-sm">
+            <li><a className="hover:text-gold" href="mailto:un@unibro.lk">un@unibro.lk</a></li>
+            <li><a className="hover:text-gold" href="tel:+94382247421">038-2247421</a></li>
+            <li><a className="hover:text-gold" href="tel:+94772341528">077-2341528</a></li>
+            <li><a className="hover:text-gold" href="tel:+94778108986">077-8108986</a></li>
+          </ul>
           {socials.length > 0 ? (
             <ul className="mt-4 flex flex-wrap gap-3 text-sm">
               {socials.map(([name, href]) => <li key={name}><a className="capitalize underline-offset-4 hover:text-gold hover:underline" href={href} rel="noreferrer" target="_blank">{name}</a></li>)}

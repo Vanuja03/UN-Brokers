@@ -80,33 +80,45 @@ export const updateMotorQuotation = asyncHandler(async (req, res) => {
   sendData(res, item, 'Quotation updated.');
 });
 
-export const downloadMotorQuotation = asyncHandler(async (req, res) => {
-  const item = await MotorQuotation.findById(req.params.id);
-  if (!item) throw new AppError(404, 'Quotation not found.');
+async function buildPdf(input: Omit<MotorQuotationInput, 'inquiryId'>, referenceNumber: string) {
   const settings = await SiteSettings.findOne();
-  const pdf = await renderMotorQuotationPdf({
-    referenceNumber: item.referenceNumber,
-    insuranceType: item.insuranceType,
-    quotationDate: item.quotationDate,
-    customerName: item.customerName,
-    vehicleNumber: item.vehicleNumber,
-    leaseOrLoanNo: item.leaseOrLoanNo,
-    usage: item.usage,
-    yearOfManufacture: item.yearOfManufacture,
-    sumInsured: item.sumInsured,
-    make: item.make,
-    model: item.model,
-    fuel: item.fuel,
-    preparedBy: item.preparedBy,
-    preparedByPhone: item.preparedByPhone,
-    preparedByEmail: item.preparedByEmail,
-    insurers: item.insurers,
-    rows: item.rows,
+  return renderMotorQuotationPdf({
+    referenceNumber,
+    insuranceType: input.insuranceType,
+    quotationDate: input.quotationDate,
+    customerName: input.customerName,
+    vehicleNumber: input.vehicleNumber,
+    leaseOrLoanNo: input.leaseOrLoanNo,
+    usage: input.usage,
+    yearOfManufacture: input.yearOfManufacture,
+    sumInsured: input.sumInsured,
+    make: input.make,
+    model: input.model,
+    fuel: input.fuel,
+    preparedBy: input.preparedBy,
+    preparedByPhone: input.preparedByPhone,
+    preparedByEmail: input.preparedByEmail,
+    insurers: input.insurers,
+    rows: input.rows,
     companyName: settings?.companyName || 'UN Insurance Brokers',
     telephone: settings?.telephone || '',
     email: settings?.email || '',
     address: settings?.address || '',
   });
+}
+
+export const previewMotorQuotation = asyncHandler(async (req, res) => {
+  const input = motorQuotationSchema.parse(req.body);
+  const pdf = await buildPdf(input, 'Preview');
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', 'inline; filename="motor-quotation-preview.pdf"');
+  res.send(pdf);
+});
+
+export const downloadMotorQuotation = asyncHandler(async (req, res) => {
+  const item = await MotorQuotation.findById(req.params.id);
+  if (!item) throw new AppError(404, 'Quotation not found.');
+  const pdf = await buildPdf(item, item.referenceNumber);
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="${item.referenceNumber}.pdf"`);
   res.send(pdf);

@@ -42,6 +42,7 @@ import {
   downloadMotorQuotation,
   getMotorQuotation,
   listMotorQuotations,
+  previewMotorQuotation,
   updateMotorQuotation,
 } from '../controllers/motorQuotationController.js';
 import { adminSettings, createStaff, listAudit, listStaff, publicSettings, updateSettings, updateStaff } from '../controllers/settingsController.js';
@@ -79,6 +80,7 @@ router.patch('/quotes/:id', ...staff, updateQuote);
 router.delete('/quotes/:id', ...staff, archiveQuote);
 
 router.get('/motor-quotations', requireAuth, listMotorQuotations);
+router.post('/motor-quotations/preview', ...staff, previewMotorQuotation);
 router.post('/motor-quotations', ...staff, createMotorQuotation);
 router.get('/motor-quotations/:id/pdf', requireAuth, downloadMotorQuotation);
 router.get('/motor-quotations/:id', requireAuth, getMotorQuotation);

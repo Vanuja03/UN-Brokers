@@ -5,7 +5,7 @@ import { campaignSchema, emailSchema, optionalAmount, optionalText, phoneSchema,
 const currentYear = new Date().getFullYear();
 
 const vehicleType = z.enum(['private-car', 'motorcycle', 'three-wheeler', 'van', 'lorry', 'bus', 'other']);
-const fuelType = z.enum(['petrol', 'diesel', 'hybrid', 'electric', 'other']);
+const fuelType = z.enum(['petrol', 'diesel', 'electric', 'phev', 'hybrid', 'other']);
 const usage = z.enum(['private', 'business', 'commercial-passenger', 'goods-transport', 'other']);
 const ownership = z.enum(['owned', 'financed', 'leased', 'other']);
 
@@ -20,7 +20,14 @@ const vehicleBase = {
   estimatedMarketValue: positiveAmount,
   vehicleUsage: usage,
   fuelType,
+  preferredCoverage: z.enum(['full-insurance', 'third-party', 'unsure', 'comprehensive', 'third-party-fire-theft']),
   existingPolicyRenewal: optionalText(500),
+  existingPolicyRenewalDate: z
+    .string()
+    .optional()
+    .transform((value) => (value ?? '').trim())
+    .refine((value) => value === '' || /^\d{4}-\d{2}-\d{2}$/.test(value), 'Enter a valid date.')
+    .transform((value) => value || undefined),
   additionalNotes: optionalText(2000),
 };
 
@@ -37,10 +44,7 @@ function withRegistration<T extends z.ZodRawShape>(shape: T) {
   });
 }
 
-const motorDetails = withRegistration({
-  ...vehicleBase,
-  preferredCoverage: z.enum(['comprehensive', 'third-party', 'third-party-fire-theft', 'unsure']),
-});
+const motorDetails = withRegistration({ ...vehicleBase });
 
 const motorThirdPartyDetails = withRegistration({
   ...vehicleBase,

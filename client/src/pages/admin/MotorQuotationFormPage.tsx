@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { blankQuotation, resizeInsurers, rowLabels, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
+import { blankQuotation, isYesNoBenefit, resizeInsurers, rowLabels, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
 import { api, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { downloadPdf } from './MotorQuotationsPage';
@@ -13,13 +13,28 @@ const usageLabels: Record<string, string> = {
   other: 'Other',
 };
 
+const fuelOptions = ['Petrol', 'Diesel', 'Electric', 'PHEV', 'Hybrid'];
+
 const fuelLabels: Record<string, string> = {
   petrol: 'Petrol',
   diesel: 'Diesel',
-  hybrid: 'Hybrid',
   electric: 'Electric',
-  other: 'Other',
+  phev: 'PHEV',
+  hybrid: 'Hybrid',
 };
+
+async function messageFrom(error: unknown, fallback: string) {
+  const data = (error as { response?: { data?: unknown } }).response?.data;
+  if (data instanceof Blob) {
+    try {
+      const parsed = JSON.parse(await data.text()) as { message?: string };
+      if (parsed.message) return parsed.message;
+    } catch {
+      return fallback;
+    }
+  }
+  return getErrorMessage(error, fallback);
+}
 
 export function MotorQuotationFormPage() {
   const { id } = useParams();
@@ -78,6 +93,18 @@ export function MotorQuotationFormPage() {
     setDraft((current) => (current ? { ...current, ...patch } : current));
   }
 
+  function setCell(rowIndex: number, valueIndex: number, next: string) {
+    setDraft((current) => {
+      if (!current) return current;
+      return {
+        ...current,
+        rows: current.rows.map((item, itemIndex) => itemIndex === rowIndex
+          ? { ...item, values: item.values.map((cell, cellIndex) => (cellIndex === valueIndex ? next : cell)) }
+          : item),
+      };
+    });
+  }
+
   function changeType(insuranceType: MotorCover) {
     setDraft((current) => {
       if (!current) return current;
@@ -106,6 +133,27 @@ export function MotorQuotationFormPage() {
       navigate(`/admin/motor-quotations/${saved._id}`, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, 'The quotation could not be saved.'));
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function showPreview() {
+    if (!draft) return;
+    if (draft.customerName.trim().length < 2) {
+      setError('Enter the customer name before showing a preview.');
+      return;
+    }
+    setPending(true);
+    setError('');
+    try {
+      const response = await api.post('/motor-quotations/preview', { ...draft, inquiryId: draft.inquiryId || '' }, { responseType: 'blob' });
+      const url = URL.createObjectURL(response.data);
+      const opened = window.open(url, '_blank', 'noopener,noreferrer');
+      window.setTimeout(() => URL.revokeObjectURL(url), 120000);
+      if (!opened) setError('Allow pop-ups to show the preview.');
+    } catch (err) {
+      setError(await messageFrom(err, 'The preview could not be opened.'));
     } finally {
       setPending(false);
     }
@@ -157,7 +205,11 @@ export function MotorQuotationFormPage() {
           <input className="field mt-1" value={draft.model} onChange={(event) => update({ model: event.target.value })} />
         </label>
         <label className="text-sm font-medium">Fuel
-          <input className="field mt-1" value={draft.fuel} onChange={(event) => update({ fuel: event.target.value })} />
+          <select className="field mt-1" value={draft.fuel} onChange={(event) => update({ fuel: event.target.value })}>
+            <option value="">Select</option>
+            {draft.fuel && !fuelOptions.includes(draft.fuel) ? <option value={draft.fuel}>{draft.fuel}</option> : null}
+            {fuelOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
         </label>
       </section>
       <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-3">
@@ -218,17 +270,26 @@ export function MotorQuotationFormPage() {
                 <th className="px-3 py-2 text-left font-semibold text-navy-900">{row.label}</th>
                 {row.values.map((value, valueIndex) => (
                   <td key={`${row.label}-${valueIndex}`} className="px-2 py-2">
-                    <input
-                      className="field"
-                      aria-label={`${row.label} for ${draft.insurers[valueIndex]}`}
-                      value={value}
-                      onChange={(event) => {
-                        const rows = draft.rows.map((item, itemIndex) => itemIndex === rowIndex
-                          ? { ...item, values: item.values.map((cell, cellIndex) => (cellIndex === valueIndex ? event.target.value : cell)) }
-                          : item);
-                        update({ rows });
-                      }}
-                    />
+                    {isYesNoBenefit(row.label) ? (
+                      <select
+                        className="field"
+                        aria-label={`${row.label} for ${draft.insurers[valueIndex]}`}
+                        value={value}
+                        onChange={(event) => setCell(rowIndex, valueIndex, event.target.value)}
+                      >
+                        <option value="">Select</option>
+                        {value && value !== 'Yes' && value !== 'No' ? <option value={value}>{value}</option> : null}
+                        <option value="Yes">Yes</option>
+                        <option value="No">No</option>
+                      </select>
+                    ) : (
+                      <input
+                        className="field"
+                        aria-label={`${row.label} for ${draft.insurers[valueIndex]}`}
+                        value={value}
+                        onChange={(event) => setCell(rowIndex, valueIndex, event.target.value)}
+                      />
+                    )}
                   </td>
                 ))}
               </tr>
@@ -239,6 +300,7 @@ export function MotorQuotationFormPage() {
       <div className="flex flex-wrap gap-3">
         <button type="submit" value="save" disabled={pending} className="rounded-full bg-navy-900 px-5 py-2 text-sm font-semibold text-white disabled:opacity-60">Save</button>
         <button type="submit" value="download" disabled={pending} className="rounded-full bg-gold px-5 py-2 text-sm font-semibold text-navy-950 disabled:opacity-60">Save and download PDF</button>
+        <button type="button" disabled={pending} onClick={() => void showPreview()} className="rounded-full border border-navy-900 px-5 py-2 text-sm font-semibold text-navy-900 disabled:opacity-60">Show preview</button>
       </div>
     </form>
   );

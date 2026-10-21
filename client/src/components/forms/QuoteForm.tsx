@@ -53,6 +53,21 @@ function revealForm(form: HTMLFormElement | null, toTop = false) {
   target.scrollIntoView({ block: 'nearest', behavior });
 }
 
+function PolicyCorner() {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const media = window.matchMedia('(prefers-reduced-motion: reduce)');
+    if (media.matches) videoRef.current?.pause();
+  }, []);
+
+  return (
+    <div className="policy-corner" aria-hidden="true">
+      <video ref={videoRef} className="policy-corner-video" src="/covers/policy-sign.mp4" autoPlay muted loop playsInline tabIndex={-1} />
+    </div>
+  );
+}
+
 function FieldShell({ id, label, required, error, children }: { id: string; label: string; required?: boolean; error?: string; children: React.ReactNode }) {
   return (
     <div>
@@ -205,9 +220,14 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
 
   return (
     <form ref={formRef} className="form-shell scroll-mt-28 rounded-2xl border border-slate-200 bg-white p-5 shadow-card sm:p-7" onSubmit={handleSubmit(onSubmit)} noValidate aria-busy={formState.isSubmitting}>
-      <p className="text-sm font-semibold uppercase tracking-[0.14em] text-navy-700">Quotation inquiry</p>
-      <h2 className="mt-1 text-2xl font-bold text-navy-900">{fixedType ? services.find((item) => item.slug === fixedType)?.name : 'Tell us what you need'}</h2>
-      <ol className="mt-5 grid grid-cols-3 gap-2" aria-label="Form progress">
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="text-sm font-semibold uppercase tracking-[0.14em] text-navy-700">Quotation inquiry</p>
+          <h2 className="mt-1 text-2xl font-bold text-navy-900">{fixedType ? services.find((item) => item.slug === fixedType)?.name : 'Tell us what you need'}</h2>
+        </div>
+        <PolicyCorner />
+      </div>
+      <ol className="mt-3 grid grid-cols-3 gap-2" aria-label="Form progress">
         {steps.map((label, index) => {
           const current = step === index + 1;
           return (
@@ -266,7 +286,7 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
               <legend className="text-sm font-semibold text-navy-900">{group}</legend>
               <div className="mt-3 grid gap-5">
                 {fields.filter((field) => field.group === group).map((field) => (
-                  <DetailField key={field.name} field={field} details={details} register={register} error={detailError(field.name)} />
+                  <DetailField key={field.name} field={field} details={details} register={register} error={detailError(field.name)} dateError={field.dateName ? detailError(field.dateName) : undefined} />
                 ))}
               </div>
             </fieldset>
@@ -279,9 +299,11 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
           <dl className="grid gap-3 rounded-xl bg-navy-50 p-4 text-sm">
             <div><dt className="font-medium text-navy-900">Name</dt><dd>{watch('customerName')}</dd></div>
             <div><dt className="font-medium text-navy-900">Contact</dt><dd>{watch('email')} · {watch('phone')}</dd></div>
-            {Object.entries(details).filter(([, value]) => value !== '' && value !== false && !(Array.isArray(value) && value.length === 0)).map(([key, value]) => (
-              <div key={key}><dt className="font-medium text-navy-900">{labelFor(key)}</dt><dd>{Array.isArray(value) ? value.join(', ') : String(value)}</dd></div>
-            ))}
+            {Object.entries(details).filter(([, value]) => value !== '' && value !== false && !(Array.isArray(value) && value.length === 0)).map(([key, value]) => {
+              const option = fields.find((field) => field.name === key)?.options?.find((item) => item.value === value);
+              const text = Array.isArray(value) ? value.join(', ') : option?.label ?? String(value);
+              return <div key={key}><dt className="font-medium text-navy-900">{labelFor(key)}</dt><dd>{text}</dd></div>;
+            })}
           </dl>
           <FieldShell id="message" label="Optional message" error={errorFor('message')}>
             <textarea id="message" rows={4} className="field" {...register('message')} />
@@ -312,10 +334,32 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
   );
 }
 
-function DetailField({ field, details, register, error }: { field: QuoteField; details: FormValues['insuranceDetails']; register: ReturnType<typeof useForm<FormValues>>['register']; error?: string }) {
+function DetailField({ field, details, register, error, dateError }: { field: QuoteField; details: FormValues['insuranceDetails']; register: ReturnType<typeof useForm<FormValues>>['register']; error?: string; dateError?: string }) {
   if (field.showWhen && details[field.showWhen.field] !== field.showWhen.equals) return null;
   const name = `insuranceDetails.${field.name}` as const;
   const id = fieldId(name);
+  if (field.dateName) {
+    const dateName = `insuranceDetails.${field.dateName}` as const;
+    const dateId = fieldId(dateName);
+    return (
+      <fieldset>
+        <legend className="mb-1.5 text-sm font-medium text-navy-900">{field.label}</legend>
+        <div className="form-pair">
+          <div>
+            <label htmlFor={id} className="mb-1.5 block text-xs font-medium text-slate-600">Details</label>
+            <input id={id} className="field" type="text" placeholder={field.placeholder} aria-invalid={Boolean(error)} {...register(name)} />
+            {error ? <p role="alert" className="mt-1 text-sm text-red-700">{error}</p> : null}
+          </div>
+          <div>
+            <label htmlFor={dateId} className="mb-1.5 block text-xs font-medium text-slate-600">Date</label>
+            <input id={dateId} className="field" type="date" aria-invalid={Boolean(dateError)} {...register(dateName)} />
+            {dateError ? <p role="alert" className="mt-1 text-sm text-red-700">{dateError}</p> : null}
+          </div>
+        </div>
+        {field.help ? <p className="mt-1 text-xs text-slate-500">{field.help}</p> : null}
+      </fieldset>
+    );
+  }
   if (field.type === 'checkbox') {
     return (
       <label className="flex items-start gap-3 text-sm text-navy-900">

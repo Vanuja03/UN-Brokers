@@ -52,7 +52,7 @@ export function AboutStory({ title, heading = 'h2' }: { title: string; heading?:
 const stats = [
   { icon: Users, target: 2500, label: 'Clients' },
   { icon: FileCheck, target: 10000, label: 'Claims' },
-  { icon: Award, target: 25, label: 'Years of experience' },
+  { icon: Award, target: 15, label: 'Years of experience' },
 ];
 
 function AboutStats() {

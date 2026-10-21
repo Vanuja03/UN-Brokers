@@ -13,6 +13,7 @@ export type QuoteField = {
   help?: string;
   showWhen?: { field: string; equals: string };
   inputMode?: 'numeric' | 'decimal' | 'text';
+  dateName?: string;
 };
 
 const vehicleTypes = [
@@ -28,8 +29,9 @@ const vehicleTypes = [
 const fuelTypes = [
   { value: 'petrol', label: 'Petrol' },
   { value: 'diesel', label: 'Diesel' },
-  { value: 'hybrid', label: 'Hybrid' },
   { value: 'electric', label: 'Electric' },
+  { value: 'phev', label: 'PHEV' },
+  { value: 'hybrid', label: 'Hybrid' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -39,6 +41,12 @@ const usageTypes = [
   { value: 'commercial-passenger', label: 'Commercial passenger transport' },
   { value: 'goods-transport', label: 'Goods transport' },
   { value: 'other', label: 'Other' },
+];
+
+const coverTypes = [
+  { value: 'full-insurance', label: 'Full insurance' },
+  { value: 'third-party', label: 'Third party' },
+  { value: 'unsure', label: 'I have no idea yet' },
 ];
 
 const ownershipTypes = [
@@ -84,24 +92,19 @@ function vehicleFields(currency: string, includeCoverage: boolean): QuoteField[]
       inputMode: 'decimal',
     },
     { name: 'vehicleUsage', label: 'Vehicle usage', type: 'select', group: 'Use and value', required: true, options: usageTypes },
-    { name: 'existingPolicyRenewal', label: 'Existing policy or renewal details', type: 'textarea', group: 'Cover', help: 'Optional. Include only what you are comfortable sharing.' },
+    { name: 'preferredCoverage', label: 'Cover type', type: 'select', group: 'Cover', required: true, options: coverTypes },
+    {
+      name: 'existingPolicyRenewal',
+      label: 'Existing policy and renewal date',
+      type: 'text',
+      group: 'Cover',
+      placeholder: 'Policy number or insurer',
+      dateName: 'existingPolicyRenewalDate',
+      help: 'Optional. Add a policy number or insurer, and the renewal date.',
+    },
     { name: 'additionalNotes', label: 'Additional notes', type: 'textarea', group: 'Cover' },
   ];
-  if (includeCoverage) {
-    fields.splice(fields.length - 2, 0, {
-      name: 'preferredCoverage',
-      label: 'Preferred coverage',
-      type: 'select',
-      group: 'Cover',
-      required: true,
-      options: [
-        { value: 'comprehensive', label: 'Comprehensive' },
-        { value: 'third-party', label: 'Third party' },
-        { value: 'third-party-fire-theft', label: 'Third party, fire and theft' },
-        { value: 'unsure', label: 'I am not sure yet' },
-      ],
-    });
-  } else {
+  if (!includeCoverage) {
     fields.splice(fields.length - 2, 0, {
       name: 'liabilityNotes',
       label: 'Anything the team should know about the liability cover you need',
@@ -200,10 +203,9 @@ export function defaultDetails(type: InsuranceType): Record<string, string | num
     Object.assign(base, {
       vehicleType: 'private-car', vehicleMake: '', vehicleModel: '', yearOfManufacture: '', registrationAvailable: 'no',
       registrationNumber: '', ownershipStatus: 'owned', estimatedMarketValue: '', vehicleUsage: 'private', fuelType: 'petrol',
-      existingPolicyRenewal: '', additionalNotes: '',
+      existingPolicyRenewal: '', existingPolicyRenewalDate: '', preferredCoverage: 'unsure', additionalNotes: '',
     });
-    if (type === 'motor') base.preferredCoverage = 'unsure';
-    else base.liabilityNotes = '';
+    if (type === 'motor-third-party') base.liabilityNotes = '';
   }
   if (type === 'travel') Object.assign(base, { destination: '', departureDate: '', returnDate: '', travelerCount: 1, travelerAges: '', benefitPreferences: [], additionalNotes: '' });
   if (type === 'fire') Object.assign(base, { propertyType: 'commercial', location: '', coverBuilding: false, coverContents: false, estimatedInsuredValue: '', occupancy: '', riskDetails: '' });
