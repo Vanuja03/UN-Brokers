@@ -8,6 +8,7 @@ const links = [
   ['/admin/dashboard', 'Overview'],
   ['/admin/quotations', 'Quotations'],
   ['/admin/motor-quotations', 'Motor quotations'],
+  ['/admin/policy-renewals', 'Policy renewals'],
   ['/admin/contacts', 'Messages'],
   ['/admin/content', 'Content'],
   ['/admin/settings', 'Settings'],

@@ -23,6 +23,7 @@ import { QuotationDetailPage } from '../pages/admin/QuotationDetailPage';
 import { MotorQuotationsPage } from '../pages/admin/MotorQuotationsPage';
 import { MotorQuotationFormPage } from '../pages/admin/MotorQuotationFormPage';
 import { ContactsPage } from '../pages/admin/ContactsPage';
+import { PolicyRenewalsPage } from '../pages/admin/PolicyRenewalsPage';
 import { ContentPage } from '../pages/admin/ContentPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
 import { services } from '../content/services';
@@ -59,6 +60,7 @@ export function AppRoutes() {
           <Route path="motor-quotations" element={<MotorQuotationsPage />} />
           <Route path="motor-quotations/new" element={<MotorQuotationFormPage />} />
           <Route path="motor-quotations/:id" element={<MotorQuotationFormPage />} />
+          <Route path="policy-renewals" element={<PolicyRenewalsPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="content" element={<ContentPage />} />
           <Route path="settings" element={<SettingsPage />} />

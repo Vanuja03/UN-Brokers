@@ -45,12 +45,21 @@ import {
   previewMotorQuotation,
   updateMotorQuotation,
 } from '../controllers/motorQuotationController.js';
+import {
+  createPolicyRenewal,
+  deletePolicyRenewal,
+  downloadPolicyRenewals,
+  getPolicyRenewal,
+  listPolicyRenewals,
+  updatePolicyRenewal,
+} from '../controllers/policyRenewalController.js';
 import { adminSettings, createStaff, listAudit, listStaff, publicSettings, updateSettings, updateStaff } from '../controllers/settingsController.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { requireCsrf } from '../middleware/csrf.js';
 import { authLimiter, inquiryLimiter } from '../middleware/rateLimits.js';
 import { validateBody } from '../middleware/validate.js';
 import { faqSchema, insuranceContentSchema, partnerSchema, settingsSchema, teamSchema, testimonialSchema } from '../validators/content.js';
+import { policyRenewalSchema } from '../validators/policyRenewal.js';
 
 export const router = Router();
 
@@ -78,6 +87,13 @@ router.get('/quotes/:id', requireAuth, getQuote);
 router.patch('/quotes/:id/status', ...staff, updateQuoteStatus);
 router.patch('/quotes/:id', ...staff, updateQuote);
 router.delete('/quotes/:id', ...staff, archiveQuote);
+
+router.get('/policy-renewals', requireAuth, listPolicyRenewals);
+router.get('/policy-renewals/pdf', requireAuth, downloadPolicyRenewals);
+router.post('/policy-renewals', ...staff, validateBody(policyRenewalSchema), createPolicyRenewal);
+router.get('/policy-renewals/:id', requireAuth, getPolicyRenewal);
+router.patch('/policy-renewals/:id', ...staff, validateBody(policyRenewalSchema), updatePolicyRenewal);
+router.delete('/policy-renewals/:id', ...staff, deletePolicyRenewal);
 
 router.get('/motor-quotations', requireAuth, listMotorQuotations);
 router.post('/motor-quotations/preview', ...staff, previewMotorQuotation);
