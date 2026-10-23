@@ -6,7 +6,7 @@ import { Container } from '../components/common/Container';
 import { SectionHeading } from '../components/common/SectionHeading';
 import { FaqList } from '../components/common/FaqList';
 import { Button } from '../components/common/Button';
-import { ServiceCard } from '../components/insurance/ServiceCard';
+import { CoverageShowcase } from '../components/insurance/CoverageShowcase';
 import { PartnerSlideshow } from '../components/partners/PartnerSlideshow';
 import { FeedbackSlideshow } from '../components/feedback/FeedbackSlideshow';
 import { ContactForm } from '../components/forms/ContactForm';
@@ -20,7 +20,7 @@ import { api, whatsappHref } from '../services/api';
 import { useSettings } from '../context/SettingsContext';
 import { useQuoteSelection } from '../context/QuoteSelectionContext';
 import type { Faq, InsuranceType, TeamMember } from '../types';
-import { INSURANCE_TYPES, isInsuranceType } from '../types';
+import { isInsuranceType } from '../types';
 
 export function HomePage() {
   const { settings } = useSettings();
@@ -40,14 +40,7 @@ export function HomePage() {
       <Seo title={`${settings.companyName} | Insurance quotations`} description={settings.tagline} path="/" jsonLd={jsonLd} />
       <Hero />
       <ScrollCoverScene />
-      <section id="insurance" className="section-anchor py-16">
-        <Container>
-          <SectionHeading eyebrow="Coverage" title="Insurance services" text="Each category collects different details. Choose the one that matches what you want quoted." />
-          <div className="mt-10 grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-            {INSURANCE_TYPES.map((slug) => <ServiceCard key={slug} slug={slug} />)}
-          </div>
-        </Container>
-      </section>
+      <CoverageShowcase />
       <Why />
       <How />
       <PartnersStrip />

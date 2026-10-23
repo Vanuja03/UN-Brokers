@@ -52,6 +52,7 @@ const quoteSchema = new Schema(
     notifications: {
       business: { type: String, enum: ['sent', 'failed', 'skipped'], default: 'skipped' },
       customer: { type: String, enum: ['sent', 'failed', 'skipped'], default: 'skipped' },
+      whatsapp: { type: String, enum: ['sent', 'failed', 'skipped'], default: 'skipped' },
     },
   },
   { timestamps: true },

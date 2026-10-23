@@ -7,6 +7,7 @@ import { Quote } from '../models/Quote.js';
 import { SiteSettings } from '../models/SiteSettings.js';
 import { recordAudit } from '../services/audit.js';
 import { sendQuoteEmails } from '../services/email.js';
+import { sendQuoteWhatsApp } from '../services/whatsapp.js';
 import { sendData } from '../utils/apiResponse.js';
 import { AppError } from '../utils/AppError.js';
 import { asyncHandler } from '../utils/asyncHandler.js';
@@ -107,8 +108,13 @@ export const createQuote = asyncHandler(async (req, res) => {
     fingerprint,
   });
 
+  const notifications: { business: 'sent' | 'failed' | 'skipped'; customer: 'sent' | 'failed' | 'skipped'; whatsapp: 'sent' | 'failed' | 'skipped' } = {
+    business: 'skipped',
+    customer: 'skipped',
+    whatsapp: 'skipped',
+  };
   try {
-    quote.notifications = await sendQuoteEmails({
+    const emailResult = await sendQuoteEmails({
       referenceNumber: quote.referenceNumber,
       customerName: quote.customerName,
       email: quote.email,
@@ -122,10 +128,22 @@ export const createQuote = asyncHandler(async (req, res) => {
       companyName: settings?.companyName || env.companyName,
       notificationEmail: settings?.notificationEmail || '',
     });
-    await quote.save();
+    notifications.business = emailResult.business;
+    notifications.customer = emailResult.customer;
   } catch (error) {
     console.error(error instanceof Error ? error.message : 'Email error');
   }
+  try {
+    notifications.whatsapp = await sendQuoteWhatsApp({
+      customerName: quote.customerName,
+      phone: quote.phone,
+      insuranceType: quote.insuranceType,
+    });
+  } catch (error) {
+    console.error(error instanceof Error ? error.message : 'WhatsApp error');
+  }
+  quote.notifications = notifications;
+  await quote.save();
 
   if (idempotency) {
     await IdempotencyKey.updateOne(

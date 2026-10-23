@@ -30,6 +30,10 @@ const envSchema = z
     DEFAULT_CURRENCY: z.string().min(3).max(3).default('LKR'),
     BUSINESS_TIMEZONE: z.string().min(1).default('Asia/Colombo'),
     ADMIN_APP_URL: z.string().optional().default(''),
+    WHATSAPP_TOKEN: z.string().optional().default(''),
+    WHATSAPP_PHONE_NUMBER_ID: z.string().optional().default(''),
+    WHATSAPP_TO: z.string().optional().default(''),
+    WHATSAPP_TEMPLATE: z.string().optional().default('new_quotation'),
   })
   .superRefine((value, ctx) => {
     if (value.NODE_ENV === 'production') {
@@ -92,7 +96,15 @@ export const env = {
   defaultCurrency: data.DEFAULT_CURRENCY.toUpperCase(),
   businessTimezone: data.BUSINESS_TIMEZONE,
   adminAppUrl: data.ADMIN_APP_URL,
+  whatsappToken: data.WHATSAPP_TOKEN,
+  whatsappPhoneNumberId: data.WHATSAPP_PHONE_NUMBER_ID,
+  whatsappTo: data.WHATSAPP_TO.replace(/\D/g, ''),
+  whatsappTemplate: data.WHATSAPP_TEMPLATE,
 };
+
+export function whatsappConfigured() {
+  return Boolean(env.whatsappToken && env.whatsappPhoneNumberId && env.whatsappTo);
+}
 
 export function smtpConfigured() {
   return Boolean(env.smtpHost && env.smtpFrom);
