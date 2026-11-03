@@ -16,6 +16,7 @@ const policyRenewalSchema = new Schema(
     speciCo: { type: String, default: '', trim: true, maxlength: 160 },
     status: { type: String, enum: ['ren', 'new'], required: true, default: 'ren' },
     renewalResult: { type: String, enum: ['done', 'cancel', 'sold', ''], default: '' },
+    commissionReceived: { type: Boolean, default: false },
     contactNo: { type: String, required: true, trim: true, maxlength: 20 },
     remarks: { type: String, default: '', maxlength: 1000 },
   },

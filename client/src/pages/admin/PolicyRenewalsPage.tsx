@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Check, Tag, X } from 'lucide-react';
 import { api, getErrorMessage, getFieldErrors } from '../../services/api';
+import { PolicyRegisterSection } from './PolicyRegisterSection';
 
 type Status = 'ren' | 'new';
 type RenewalResult = '' | 'done' | 'cancel' | 'sold';
@@ -15,12 +16,13 @@ type Policy = {
   postalAddress: string;
   sumInsured: number;
   lastYearPremium: number;
-  thisYearPremium: number;
+  thisYearPremium: number | null;
   insuranceCompany: string;
   salesPerson: string;
   speciCo: string;
   status: Status;
   renewalResult: RenewalResult;
+  commissionReceived: boolean;
   contactNo: string;
   remarks: string;
 };
@@ -40,6 +42,7 @@ type FormState = {
   speciCo: string;
   status: Status;
   renewalResult: RenewalResult;
+  commissionReceived: boolean;
   contactNo: string;
   remarks: string;
 };
@@ -65,6 +68,7 @@ const blank: FormState = {
   speciCo: '',
   status: 'ren',
   renewalResult: '',
+  commissionReceived: false,
   contactNo: '',
   remarks: '',
 };
@@ -77,8 +81,9 @@ function day(value: string) {
   return value ? value.slice(0, 10) : '';
 }
 
-function money(value: number) {
-  return new Intl.NumberFormat('en-LK', { maximumFractionDigits: 2 }).format(value || 0);
+function money(value: number | null | undefined) {
+  if (value == null) return '—';
+  return new Intl.NumberFormat('en-LK', { maximumFractionDigits: 2 }).format(value);
 }
 
 const requiredFields: (keyof FormState)[] = [
@@ -91,9 +96,6 @@ const requiredFields: (keyof FormState)[] = [
   'sumInsured',
   'lastYearPremium',
   'thisYearPremium',
-  'insuranceCompany',
-  'status',
-  'contactNo',
 ];
 
 const amountFields = ['sumInsured', 'lastYearPremium', 'thisYearPremium'] as const;
@@ -101,7 +103,8 @@ const amountFields = ['sumInsured', 'lastYearPremium', 'thisYearPremium'] as con
 function validatePolicy(values: FormState) {
   const errors: Partial<Record<keyof FormState, string>> = {};
   for (const key of requiredFields) {
-    if (!values[key].trim()) errors[key] = 'This field is required.';
+    const value = values[key];
+    if (typeof value !== 'string' || !value.trim()) errors[key] = 'This field is required.';
   }
   if (values.fromDate && values.toDate && values.toDate < values.fromDate) {
     errors.toDate = 'The to date must be on or after the from date.';
@@ -130,12 +133,13 @@ function toForm(row: Policy): FormState {
     postalAddress: row.postalAddress || '',
     sumInsured: String(row.sumInsured ?? ''),
     lastYearPremium: String(row.lastYearPremium ?? ''),
-    thisYearPremium: String(row.thisYearPremium ?? ''),
+    thisYearPremium: row.thisYearPremium == null ? '' : String(row.thisYearPremium),
     insuranceCompany: row.insuranceCompany || '',
     salesPerson: row.salesPerson || '',
     speciCo: row.speciCo || '',
     status: row.status,
     renewalResult: row.renewalResult || '',
+    commissionReceived: row.commissionReceived === true,
     contactNo: row.contactNo,
     remarks: row.remarks || '',
   };
@@ -145,6 +149,8 @@ export function PolicyRenewalsPage() {
   const [rows, setRows] = useState<Policy[]>([]);
   const [month, setMonth] = useState('');
   const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
+  const [commission, setCommission] = useState('');
   const [form, setForm] = useState<FormState>(blank);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [viewing, setViewing] = useState<Policy | null>(null);
@@ -152,9 +158,19 @@ export function PolicyRenewalsPage() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [saving, setSaving] = useState(false);
+  const [tab, setTab] = useState<'register' | 'renewal'>('register');
 
-  function load(nextMonth = month, nextSearch = search) {
-    return api.get('/policy-renewals', { params: { month: nextMonth, search: nextSearch } }).then((response) => setRows(response.data.data));
+  function renewalBody(values: FormState) {
+    return {
+      thisYearPremium: values.thisYearPremium,
+      renewalResult: values.renewalResult,
+      commissionReceived: values.commissionReceived,
+      remarks: values.remarks,
+    };
+  }
+
+  function load(nextMonth = month, nextSearch = search, nextCategory = category, nextCommission = commission) {
+    return api.get('/policy-renewals', { params: { month: nextMonth, search: nextSearch, category: nextCategory, commission: nextCommission } }).then((response) => setRows(response.data.data));
   }
 
   useEffect(() => {
@@ -162,7 +178,7 @@ export function PolicyRenewalsPage() {
       load().catch(() => setError('Policies could not be loaded.'));
     }, 250);
     return () => window.clearTimeout(timer);
-  }, [month, search]);
+  }, [month, search, category, commission]);
 
   function update<K extends keyof FormState>(key: K, value: FormState[K]) {
     setForm((current) => ({ ...current, [key]: value }));
@@ -177,7 +193,7 @@ export function PolicyRenewalsPage() {
   async function downloadList() {
     setError('');
     try {
-      const response = await api.get('/policy-renewals/pdf', { params: { month, search }, responseType: 'blob' });
+      const response = await api.get('/policy-renewals/pdf', { params: { month, search, category, commission }, responseType: 'blob' });
       const url = URL.createObjectURL(response.data);
       const link = document.createElement('a');
       const monthName = months[Number(month) - 1];
@@ -188,15 +204,6 @@ export function PolicyRenewalsPage() {
     } catch {
       setError('The PDF could not be downloaded.');
     }
-  }
-
-  function startAdd() {
-    setEditingId(null);
-    setViewing(null);
-    setForm(blank);
-    setError('');
-    setFieldErrors({});
-    setShowForm(true);
   }
 
   function startEdit(row: Policy) {
@@ -216,12 +223,12 @@ export function PolicyRenewalsPage() {
       setError('Please check the highlighted information and try again.');
       return;
     }
+    if (!editingId) return;
     setSaving(true);
     setError('');
     setFieldErrors({});
     try {
-      if (editingId) await api.patch(`/policy-renewals/${editingId}`, form);
-      else await api.post('/policy-renewals', form);
+      await api.patch(`/policy-renewals/${editingId}`, renewalBody(form));
       setShowForm(false);
       setForm(blank);
       setEditingId(null);
@@ -238,11 +245,22 @@ export function PolicyRenewalsPage() {
     }
   }
 
+  async function markCommission(row: Policy, commissionReceived: boolean) {
+    setError('');
+    try {
+      await api.patch(`/policy-renewals/${row._id}`, { ...renewalBody(toForm(row)), commissionReceived });
+      if (viewing?._id === row._id) setViewing({ ...row, commissionReceived });
+      await load();
+    } catch (markError) {
+      setError(getErrorMessage(markError, 'The commission status could not be saved.'));
+    }
+  }
+
   async function mark(row: Policy, renewalResult: Exclude<RenewalResult, ''>) {
     setError('');
     const next = row.renewalResult === renewalResult ? '' : renewalResult;
     try {
-      await api.patch(`/policy-renewals/${row._id}`, { ...toForm(row), renewalResult: next });
+      await api.patch(`/policy-renewals/${row._id}`, { ...renewalBody(toForm(row)), renewalResult: next });
       if (viewing?._id === row._id) setViewing({ ...row, renewalResult: next });
       await load();
     } catch (markError) {
@@ -250,71 +268,75 @@ export function PolicyRenewalsPage() {
     }
   }
 
-  async function remove(row: Policy) {
-    if (!window.confirm(`Delete policy ${row.policyNumber}?`)) return;
-    setError('');
-    try {
-      await api.delete(`/policy-renewals/${row._id}`);
-      if (viewing?._id === row._id) setViewing(null);
-      if (editingId === row._id) {
-        setShowForm(false);
-        setEditingId(null);
-      }
-      await load();
-    } catch (deleteError) {
-      setError(getErrorMessage(deleteError, 'The policy could not be deleted.'));
-    }
-  }
-
   return (
     <div>
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
-          <h1 className="text-3xl font-bold">Policy renewal list</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">Add, view, edit, or delete policies. The month list uses the to date and includes every year.</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          <button type="button" className="rounded-full border border-navy-900 px-4 py-2 text-sm font-semibold text-navy-900" onClick={() => void downloadList()}>Download PDF</button>
-          <button type="button" className="rounded-full bg-navy-900 px-4 py-2 text-sm font-semibold text-white" onClick={startAdd}>Add policy</button>
+          <h1 className="text-3xl font-bold">Policies</h1>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600">The same registered policies appear in both views. Renewal uses the risk date, the renewal date, and the premium net.</p>
         </div>
       </div>
+      <div role="tablist" aria-label="Policy views" className="mt-5 flex flex-wrap gap-2">
+        <button type="button" role="tab" aria-selected={tab === 'register'} className={`rounded-full px-4 py-2 text-sm font-semibold ${tab === 'register' ? 'bg-navy-900 text-white' : 'border border-slate-300 text-navy-900'}`} onClick={() => setTab('register')}>Policy register</button>
+        <button type="button" role="tab" aria-selected={tab === 'renewal'} className={`rounded-full px-4 py-2 text-sm font-semibold ${tab === 'renewal' ? 'bg-navy-900 text-white' : 'border border-slate-300 text-navy-900'}`} onClick={() => setTab('renewal')}>Policy renewal</button>
+      </div>
+      {error && tab === 'register' ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : null}
+      {tab === 'register' ? <PolicyRegisterSection /> : null}
+      {tab === 'renewal' ? (
+      <>
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <h2 className="text-2xl font-bold">Policy renewal</h2>
+          <p className="mt-1 max-w-2xl text-sm text-slate-600">From date is the risk date, to date is the renewal date, and last year premium is the premium net. Enter this year premium and save it on the policy.</p>
+        </div>
+        <button type="button" className="rounded-full border border-navy-900 px-4 py-2 text-sm font-semibold text-navy-900" onClick={() => void downloadList()}>Download PDF</button>
+      </div>
 
-      <div className="mt-4 grid gap-3 sm:grid-cols-[16rem_1fr]">
-        <select className="field" value={month} onChange={(event) => setMonth(event.target.value)} aria-label="Filter by to-date month">
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        <select className="field" value={month} onChange={(event) => setMonth(event.target.value)} aria-label="Filter by renewal month">
           <option value="">All months</option>
           {months.map((name, index) => <option key={name} value={String(index + 1)}>{name}</option>)}
+        </select>
+        <select className="field" value={category} onChange={(event) => setCategory(event.target.value)} aria-label="Filter by cancel or sold">
+          <option value="">All renewal marks</option>
+          <option value="cancel">Cancel</option>
+          <option value="sold">Sold</option>
+          <option value="cancel-sold">Cancel or sold</option>
+        </select>
+        <select className="field" value={commission} onChange={(event) => setCommission(event.target.value)} aria-label="Filter by commission received">
+          <option value="">All commission statuses</option>
+          <option value="received">Commission received</option>
+          <option value="pending">Commission not received</option>
         </select>
         <input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search policy no, vehicle no, name, or contact" aria-label="Search policies" />
       </div>
       {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : null}
 
-      {showForm ? (
+      {showForm && editingId ? (
         <form className="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 xl:grid-cols-3" noValidate onSubmit={(event) => void save(event)}>
-          <h2 className="sm:col-span-2 xl:col-span-3 text-lg font-bold">{editingId ? 'Edit policy' : 'Add policy'}</h2>
-          {editingId ? <p className="sm:col-span-2 xl:col-span-3 text-sm text-slate-600">Policy no, vehicle no, and customer name stay as they were first saved.</p> : null}
-          <Field name="policyNumber" label="Policy no" value={form.policyNumber} error={fieldErrors.policyNumber} onChange={(value) => update('policyNumber', value)} required readOnly={Boolean(editingId)} />
-          <Field name="vehicleNumber" label="Vehicle no" value={form.vehicleNumber} error={fieldErrors.vehicleNumber} onChange={(value) => update('vehicleNumber', value)} required readOnly={Boolean(editingId)} />
+          <h3 className="sm:col-span-2 xl:col-span-3 text-lg font-bold">Edit renewal</h3>
+          <p className="sm:col-span-2 xl:col-span-3 text-sm text-slate-600">The register details stay as saved. Enter this year premium, then save it on this policy.</p>
+          <Field name="policyNumber" label="Policy no" value={form.policyNumber} error={fieldErrors.policyNumber} onChange={(value) => update('policyNumber', value)} readOnly />
+          <Field name="vehicleNumber" label="Vehicle no" value={form.vehicleNumber} error={fieldErrors.vehicleNumber} onChange={(value) => update('vehicleNumber', value)} readOnly />
           <label className="text-sm font-medium text-navy-900">Sat
-            <select className="field mt-1.5" value={form.status} aria-invalid={fieldErrors.status ? true : undefined} onChange={(event) => update('status', event.target.value as Status)} aria-label="Sat" required>
+            <select className="field mt-1.5 bg-slate-100 text-slate-600" value={form.status} aria-label="Sat" disabled>
               <option value="ren">Ren</option>
               <option value="new">New</option>
             </select>
-            {fieldErrors.status ? <span className="mt-1 block text-sm text-red-700">{fieldErrors.status}</span> : null}
           </label>
-          <Field name="fromDate" label="From date" type="date" value={form.fromDate} error={fieldErrors.fromDate} onChange={(value) => update('fromDate', value)} required />
-          <Field name="toDate" label="To date" type="date" value={form.toDate} error={fieldErrors.toDate} onChange={(value) => update('toDate', value)} required />
-          <Field name="customerName" label="Customer name" value={form.customerName} error={fieldErrors.customerName} onChange={(value) => update('customerName', value)} required readOnly={Boolean(editingId)} />
-          <Field name="contactNo" label="Contact no" value={form.contactNo} error={fieldErrors.contactNo} onChange={(value) => update('contactNo', value)} required />
+          <Field name="fromDate" label="From date (risk date)" type="date" value={form.fromDate} error={fieldErrors.fromDate} onChange={(value) => update('fromDate', value)} readOnly />
+          <Field name="toDate" label="To date (renewal date)" type="date" value={form.toDate} error={fieldErrors.toDate} onChange={(value) => update('toDate', value)} readOnly />
+          <Field name="customerName" label="Customer name" value={form.customerName} error={fieldErrors.customerName} onChange={(value) => update('customerName', value)} readOnly />
+          <Field name="contactNo" label="Contact no" value={form.contactNo} error={fieldErrors.contactNo} onChange={(value) => update('contactNo', value)} readOnly />
           <label className="text-sm font-medium text-navy-900 sm:col-span-2">Postal address
-            <textarea className="field mt-1.5" rows={2} required value={form.postalAddress} aria-invalid={fieldErrors.postalAddress ? true : undefined} onChange={(event) => update('postalAddress', event.target.value)} />
-            {fieldErrors.postalAddress ? <span className="mt-1 block text-sm text-red-700">{fieldErrors.postalAddress}</span> : null}
+            <textarea className="field mt-1.5 bg-slate-100 text-slate-600" rows={2} readOnly value={form.postalAddress} />
           </label>
-          <Field name="sumInsured" label="Sum insured" value={form.sumInsured} error={fieldErrors.sumInsured} inputMode="decimal" onChange={(value) => update('sumInsured', value)} required />
-          <Field name="lastYearPremium" label="Last year premium" value={form.lastYearPremium} error={fieldErrors.lastYearPremium} inputMode="decimal" onChange={(value) => update('lastYearPremium', value)} required />
+          <Field name="sumInsured" label="Sum insured" value={form.sumInsured} error={fieldErrors.sumInsured} onChange={(value) => update('sumInsured', value)} readOnly />
+          <Field name="lastYearPremium" label="Last year premium (premium net)" value={form.lastYearPremium} error={fieldErrors.lastYearPremium} onChange={(value) => update('lastYearPremium', value)} readOnly />
           <Field name="thisYearPremium" label="This year premium" value={form.thisYearPremium} error={fieldErrors.thisYearPremium} inputMode="decimal" onChange={(value) => update('thisYearPremium', value)} required />
-          <Field name="insuranceCompany" label="Insurance company" value={form.insuranceCompany} error={fieldErrors.insuranceCompany} onChange={(value) => update('insuranceCompany', value)} required />
-          <Field name="salesPerson" label="Sales person" value={form.salesPerson} error={fieldErrors.salesPerson} onChange={(value) => update('salesPerson', value)} />
-          <Field name="speciCo" label="Speci co" value={form.speciCo} error={fieldErrors.speciCo} onChange={(value) => update('speciCo', value)} />
+          <Field name="insuranceCompany" label="Insurance company" value={form.insuranceCompany} error={fieldErrors.insuranceCompany} onChange={(value) => update('insuranceCompany', value)} readOnly />
+          <Field name="salesPerson" label="Sales person" value={form.salesPerson} error={fieldErrors.salesPerson} onChange={(value) => update('salesPerson', value)} readOnly />
+          <Field name="speciCo" label="Agent code" value={form.speciCo} error={fieldErrors.speciCo} onChange={(value) => update('speciCo', value)} readOnly />
           <fieldset className="text-sm font-medium text-navy-900 sm:col-span-2 xl:col-span-3">
             <legend>Renewal</legend>
             <p className="mt-1 text-slate-600">After the one-year period, mark the policy. Click the same mark again to clear it. Remarks stay a written note.</p>
@@ -331,12 +353,16 @@ export function PolicyRenewalsPage() {
             </div>
             {fieldErrors.renewalResult ? <span className="mt-1 block text-sm text-red-700">{fieldErrors.renewalResult}</span> : null}
           </fieldset>
+          <label className="flex items-center gap-2 text-sm font-medium text-navy-900 sm:col-span-2 xl:col-span-3">
+            <input type="checkbox" checked={form.commissionReceived} onChange={(event) => update('commissionReceived', event.target.checked)} />
+            Commission received
+          </label>
           <label className="text-sm font-medium text-navy-900 sm:col-span-2 xl:col-span-3">Remarks
             <textarea className="field mt-1.5" rows={2} value={form.remarks} aria-invalid={fieldErrors.remarks ? true : undefined} onChange={(event) => update('remarks', event.target.value)} />
             {fieldErrors.remarks ? <span className="mt-1 block text-sm text-red-700">{fieldErrors.remarks}</span> : null}
           </label>
           <div className="flex gap-3 sm:col-span-2 xl:col-span-3">
-            <button type="submit" className="rounded-full bg-gold px-4 py-2 text-sm font-semibold text-navy-950 disabled:opacity-60" disabled={saving}>{saving ? 'Saving…' : editingId ? 'Save changes' : 'Save policy'}</button>
+            <button type="submit" className="rounded-full bg-gold px-4 py-2 text-sm font-semibold text-navy-950 disabled:opacity-60" disabled={saving}>{saving ? 'Saving…' : 'Save changes'}</button>
             <button type="button" className="rounded-full border px-4 py-2 text-sm font-semibold" onClick={() => setShowForm(false)}>Cancel</button>
           </div>
         </form>
@@ -351,8 +377,8 @@ export function PolicyRenewalsPage() {
           <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-3">
             <Item label="Vehicle no" value={viewing.vehicleNumber} />
             <Item label="Sat" value={statusLabel[viewing.status]} />
-            <Item label="From date" value={day(viewing.fromDate)} />
-            <Item label="To date" value={day(viewing.toDate)} />
+            <Item label="From date (risk date)" value={day(viewing.fromDate)} />
+            <Item label="To date (renewal date)" value={day(viewing.toDate)} />
             <Item label="Customer name" value={viewing.customerName} />
             <Item label="Contact no" value={viewing.contactNo} />
             <Item label="Postal address" value={viewing.postalAddress || '—'} />
@@ -361,8 +387,9 @@ export function PolicyRenewalsPage() {
             <Item label="This year premium" value={money(viewing.thisYearPremium)} />
             <Item label="Insurance company" value={viewing.insuranceCompany || '—'} />
             <Item label="Sales person" value={viewing.salesPerson || '—'} />
-            <Item label="Speci co" value={viewing.speciCo || '—'} />
+            <Item label="Agent code" value={viewing.speciCo || '—'} />
             <div><dt className="font-medium text-navy-900">Renewal</dt><dd className="mt-1 text-slate-700"><ResultIcon value={viewing.renewalResult} labelled /></dd></div>
+            <Item label="Commission received" value={viewing.commissionReceived ? 'Received' : 'Not received'} />
             <Item label="Remarks" value={viewing.remarks || '—'} />
           </dl>
         </article>
@@ -372,14 +399,14 @@ export function PolicyRenewalsPage() {
         <table className="min-w-[88rem] w-full text-left text-sm">
           <thead className="bg-navy-900 text-white">
             <tr>
-              {['Policy no', 'Vehicle no', 'From', 'To', 'Customer', 'Address', 'Sum insured', 'Last premium', 'This premium', 'Insurer', 'Sales person', 'Speci co', 'Sat', 'Contact', 'Renewal', 'Remarks', 'Actions'].map((heading) => (
+              {['Policy no', 'Vehicle no', 'From (risk date)', 'To (renewal date)', 'Customer', 'Address', 'Sum insured', 'Last year premium', 'This year premium', 'Insurer', 'Sales person', 'Agent code', 'Sat', 'Contact', 'Renewal', 'Commission', 'Remarks', 'Actions'].map((heading) => (
                 <th key={heading} className="whitespace-nowrap px-3 py-2 font-semibold">{heading}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr><td className="px-3 py-4 text-slate-600" colSpan={17}>{month || search ? 'No policies match this filter.' : 'No policies yet. Add the first one.'}</td></tr>
+              <tr><td className="px-3 py-4 text-slate-600" colSpan={18}>{month || search || category || commission ? 'No policies match this filter.' : 'No registered policies yet.'}</td></tr>
             ) : rows.map((row) => (
               <tr key={row._id} className="border-t border-slate-200 align-top">
                 <td className="px-3 py-2 font-semibold">{row.policyNumber}</td>
@@ -408,17 +435,24 @@ export function PolicyRenewalsPage() {
                     })}
                   </div>
                 </td>
+                <td className="whitespace-nowrap px-3 py-2">
+                  <label className="inline-flex items-center gap-2">
+                    <input type="checkbox" checked={row.commissionReceived === true} aria-label={`Commission received for ${row.policyNumber}`} onChange={(event) => void markCommission(row, event.target.checked)} />
+                    {row.commissionReceived ? 'Received' : 'Not received'}
+                  </label>
+                </td>
                 <td className="max-w-48 px-3 py-2">{row.remarks}</td>
                 <td className="whitespace-nowrap px-3 py-2">
                   <button type="button" className="font-semibold text-navy-900 underline" onClick={() => { setShowForm(false); setViewing(row); }}>View</button>
                   <button type="button" className="ml-3 font-semibold text-navy-900 underline" onClick={() => startEdit(row)}>Edit</button>
-                  <button type="button" className="ml-3 font-semibold text-red-700 underline" onClick={() => void remove(row)}>Delete</button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+      </>
+      ) : null}
     </div>
   );
 }

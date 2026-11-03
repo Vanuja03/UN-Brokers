@@ -37,6 +37,7 @@ describe('motor customer quotations', () => {
     const pdf = await agent.get(`/api/motor-quotations/${created.body.data._id}/pdf`);
     expect(pdf.status).toBe(200);
     expect(pdf.headers['content-type']).toMatch(/application\/pdf/);
+    expect(String(pdf.headers['content-disposition'])).toMatch(/filename="ABC-1234-/);
     const body = Buffer.isBuffer(pdf.body) ? pdf.body : Buffer.from(pdf.text || '');
     expect(body.subarray(0, 4).toString()).toBe('%PDF');
   });

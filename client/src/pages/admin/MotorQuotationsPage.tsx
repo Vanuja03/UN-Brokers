@@ -16,12 +16,17 @@ const coverName = {
   'motor-third-party': 'Third-party motor insurance',
 };
 
-async function downloadPdf(id: string, reference: string) {
+function quotationFilename(reference: string, vehicleNumber: string) {
+  const vehicle = vehicleNumber.trim().replace(/[^\w.-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return `${vehicle ? `${vehicle}-${reference}` : reference}.pdf`;
+}
+
+async function downloadPdf(id: string, reference: string, vehicleNumber: string) {
   const response = await api.get(`/motor-quotations/${id}/pdf`, { responseType: 'blob' });
   const url = URL.createObjectURL(response.data);
   const link = document.createElement('a');
   link.href = url;
-  link.download = `${reference}.pdf`;
+  link.download = quotationFilename(reference, vehicleNumber);
   link.click();
   URL.revokeObjectURL(url);
 }
@@ -41,7 +46,10 @@ export function MotorQuotationsPage() {
           <h1 className="text-3xl font-bold">Motor quotations</h1>
           <p className="mt-2 max-w-2xl text-sm text-slate-600">Comparison sheets for motor and third-party insurance. These are kept apart from customer inquiries and can be downloaded for the customer.</p>
         </div>
-        <Link to="/admin/motor-quotations/new" className="rounded-full bg-navy-900 px-4 py-2 text-sm font-semibold text-white">New quotation</Link>
+        <div className="flex flex-wrap gap-2">
+          <Link to="/admin/motor-quotations/slips" className="rounded-full border border-navy-900 px-4 py-2 text-sm font-semibold text-navy-900">Quotation slips</Link>
+          <Link to="/admin/motor-quotations/new" className="rounded-full bg-navy-900 px-4 py-2 text-sm font-semibold text-white">New quotation</Link>
+        </div>
       </div>
       {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : null}
       <div className="mt-6 space-y-3">
@@ -52,7 +60,10 @@ export function MotorQuotationsPage() {
               <p className="text-sm">{row.customerName}{row.vehicleNumber ? ` · ${row.vehicleNumber}` : ''}</p>
               <p className="text-sm text-slate-500">{coverName[row.insuranceType]} · {row.quotationDate}</p>
             </div>
-            <button type="button" className="rounded-full border px-4 py-2 text-sm font-semibold" onClick={() => void downloadPdf(row._id, row.referenceNumber)}>Download PDF</button>
+            <div className="flex flex-wrap gap-2">
+              <Link to={`/admin/motor-quotations/slips/new?quotation=${row._id}`} className="rounded-full border border-navy-900 px-4 py-2 text-sm font-semibold text-navy-900">Quotation slip</Link>
+              <button type="button" className="rounded-full border px-4 py-2 text-sm font-semibold" onClick={() => void downloadPdf(row._id, row.referenceNumber, row.vehicleNumber)}>Download PDF</button>
+            </div>
           </article>
         ))}
       </div>

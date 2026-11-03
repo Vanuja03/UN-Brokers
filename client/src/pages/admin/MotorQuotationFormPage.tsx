@@ -7,6 +7,8 @@ import { downloadPdf } from './MotorQuotationsPage';
 
 const usageLabels: Record<string, string> = {
   private: 'Private',
+  hiring: 'Hiring',
+  'rent-a-car': 'Rent a car',
   business: 'Business',
   'commercial-passenger': 'Commercial passenger',
   'goods-transport': 'Goods transport',
@@ -129,7 +131,7 @@ export function MotorQuotationFormPage() {
         ? await api.patch(`/motor-quotations/${id}`, body)
         : await api.post('/motor-quotations', body);
       const saved = response.data.data as { _id: string; referenceNumber: string };
-      if (download) await downloadPdf(saved._id, saved.referenceNumber);
+      if (download) await downloadPdf(saved._id, saved.referenceNumber, draft.vehicleNumber);
       navigate(`/admin/motor-quotations/${saved._id}`, { replace: true });
     } catch (err) {
       setError(getErrorMessage(err, 'The quotation could not be saved.'));
@@ -168,6 +170,7 @@ export function MotorQuotationFormPage() {
       <div>
         <h1 className="text-3xl font-bold">{id ? 'Edit quotation' : 'New customer quotation'}</h1>
         <p className="mt-2 text-sm text-slate-600">Fill the comparison, save it, and download a PDF in the company colours for the customer.</p>
+        {id ? <Link to={`/admin/motor-quotations/slips/new?quotation=${id}`} className="mt-3 inline-flex rounded-full border border-navy-900 px-4 py-2 text-sm font-semibold text-navy-900">Quotation slip for insurers</Link> : null}
       </div>
       {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
       <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-2">

@@ -14,6 +14,8 @@ export type QuoteField = {
   showWhen?: { field: string; equals: string };
   inputMode?: 'numeric' | 'decimal' | 'text';
   dateName?: string;
+  detailLabel?: string;
+  dateLabel?: string;
 };
 
 const vehicleTypes = [
@@ -37,16 +39,13 @@ const fuelTypes = [
 
 const usageTypes = [
   { value: 'private', label: 'Private' },
-  { value: 'business', label: 'Business' },
-  { value: 'commercial-passenger', label: 'Commercial passenger transport' },
-  { value: 'goods-transport', label: 'Goods transport' },
-  { value: 'other', label: 'Other' },
+  { value: 'hiring', label: 'Hiring' },
+  { value: 'rent-a-car', label: 'Rent a car' },
 ];
 
 const coverTypes = [
-  { value: 'full-insurance', label: 'Full insurance' },
+  { value: 'comprehensive', label: 'Comprehensive' },
   { value: 'third-party', label: 'Third party' },
-  { value: 'unsure', label: 'I have no idea yet' },
 ];
 
 const ownershipTypes = [
@@ -63,6 +62,15 @@ function vehicleFields(currency: string, includeCoverage: boolean): QuoteField[]
     { name: 'vehicleModel', label: 'Model', type: 'text', group: 'Vehicle', required: true, placeholder: 'Aqua' },
     { name: 'yearOfManufacture', label: 'Year of manufacture', type: 'number', group: 'Vehicle', required: true, inputMode: 'numeric' },
     { name: 'fuelType', label: 'Fuel type', type: 'select', group: 'Vehicle', required: true, options: fuelTypes },
+    {
+      name: 'estimatedMarketValue',
+      label: `Estimated market value (${currency})`,
+      type: 'number',
+      group: 'Use and value',
+      required: true,
+      inputMode: 'decimal',
+    },
+    { name: 'vehicleUsage', label: 'Vehicle usage', type: 'select', group: 'Use and value', required: true, options: usageTypes },
     {
       name: 'registrationAvailable',
       label: 'Is a registration number available?',
@@ -83,24 +91,17 @@ function vehicleFields(currency: string, includeCoverage: boolean): QuoteField[]
       showWhen: { field: 'registrationAvailable', equals: 'yes' },
     },
     { name: 'ownershipStatus', label: 'Ownership or financing', type: 'select', group: 'Registration and ownership', required: true, options: ownershipTypes },
-    {
-      name: 'estimatedMarketValue',
-      label: `Estimated market value (${currency})`,
-      type: 'number',
-      group: 'Use and value',
-      required: true,
-      inputMode: 'decimal',
-    },
-    { name: 'vehicleUsage', label: 'Vehicle usage', type: 'select', group: 'Use and value', required: true, options: usageTypes },
     { name: 'preferredCoverage', label: 'Cover type', type: 'select', group: 'Cover', required: true, options: coverTypes },
     {
       name: 'existingPolicyRenewal',
       label: 'Existing policy and renewal date',
       type: 'text',
       group: 'Cover',
-      placeholder: 'Policy number or insurer',
+      placeholder: 'Insurer name and no claim bonus %',
       dateName: 'existingPolicyRenewalDate',
-      help: 'Optional. Add a policy number or insurer, and the renewal date.',
+      detailLabel: 'Existing insurer + no claim bonus percentage',
+      dateLabel: 'Renewal date',
+      help: 'Optional. Add the existing insurer and no claim bonus percentage, and the renewal date.',
     },
     { name: 'additionalNotes', label: 'Additional notes', type: 'textarea', group: 'Cover' },
   ];
@@ -123,11 +124,19 @@ export function fieldsFor(type: InsuranceType, currency: string): QuoteField[] {
       return vehicleFields(currency, false);
     case 'travel':
       return [
+        { name: 'nicNo', label: 'NIC no', type: 'text', group: 'Trip', required: true, placeholder: '123456789V or 200012345678' },
         { name: 'destination', label: 'Destination', type: 'text', group: 'Trip', required: true },
         { name: 'departureDate', label: 'Departure date', type: 'date', group: 'Trip', required: true },
-        { name: 'returnDate', label: 'Return date', type: 'date', group: 'Trip', required: true },
-        { name: 'travelerCount', label: 'Number of travelers', type: 'number', group: 'Travelers', required: true, inputMode: 'numeric' },
-        { name: 'travelerAges', label: 'Ages of travelers', type: 'text', group: 'Travelers', required: true, placeholder: '34, 32, 8', help: 'Separate ages with commas.' },
+        { name: 'returnDate', label: 'Arrival date', type: 'date', group: 'Trip', required: true },
+        { name: 'dependents', label: 'Dependents', type: 'number', group: 'Trip', required: true, inputMode: 'numeric', help: 'How many dependents are travelling. Enter 0 if none.' },
+        { name: 'purpose', label: 'Purpose', type: 'select', group: 'Trip', required: true, options: [
+          { value: 'holiday', label: 'Holiday' },
+          { value: 'business', label: 'Business' },
+          { value: 'study', label: 'Study' },
+          { value: 'family', label: 'Visiting family' },
+          { value: 'medical', label: 'Medical' },
+          { value: 'other', label: 'Other' },
+        ] },
         { name: 'additionalNotes', label: 'Additional notes', type: 'textarea', group: 'Preferences' },
       ];
     case 'fire':
@@ -137,9 +146,6 @@ export function fieldsFor(type: InsuranceType, currency: string): QuoteField[] {
         ] },
         { name: 'location', label: 'Property location', type: 'text', group: 'Property', required: true },
         { name: 'occupancy', label: 'Occupancy', type: 'text', group: 'Property', required: true, placeholder: 'How the property is used' },
-        { name: 'coverBuilding', label: 'Include the building', type: 'checkbox', group: 'Values' },
-        { name: 'coverContents', label: 'Include contents', type: 'checkbox', group: 'Values' },
-        { name: 'estimatedInsuredValue', label: `Estimated insured value (${currency})`, type: 'number', group: 'Values', required: true, inputMode: 'decimal' },
         { name: 'riskDetails', label: 'Relevant risk details', type: 'textarea', group: 'Risk' },
       ];
     case 'dwelling-fire':
@@ -148,29 +154,14 @@ export function fieldsFor(type: InsuranceType, currency: string): QuoteField[] {
         { name: 'occupantStatus', label: 'Your relationship to the home', type: 'select', group: 'Home', required: true, options: [
           { value: 'owner', label: 'Owner-occupier' }, { value: 'tenant', label: 'Tenant' }, { value: 'landlord', label: 'Landlord' }, { value: 'other', label: 'Other' },
         ] },
-        { name: 'buildingValue', label: `Building value (${currency})`, type: 'number', group: 'Values', inputMode: 'decimal', help: 'Enter a building value, a contents value, or both.' },
-        { name: 'contentsValue', label: `Contents value (${currency})`, type: 'number', group: 'Values', inputMode: 'decimal' },
-        { name: 'constructionType', label: 'Construction type', type: 'text', group: 'Risk', placeholder: 'Optional' },
-        { name: 'riskDetails', label: 'Relevant property or fire-risk details', type: 'textarea', group: 'Risk' },
       ];
     case 'workers-compensation':
       return [
         { name: 'businessActivity', label: 'Business activity', type: 'text', group: 'Business', required: true },
-        { name: 'employeeCount', label: 'Number of employees', type: 'number', group: 'Employees', required: true, inputMode: 'numeric' },
-        { name: 'employeeCategories', label: 'Employee categories', type: 'text', group: 'Employees', required: true, placeholder: 'For example, office staff, drivers, technicians' },
-        { name: 'estimatedAnnualPayroll', label: `Estimated annual payroll (${currency})`, type: 'number', group: 'Employees', inputMode: 'decimal', help: 'Optional unless an insurer asks for it.' },
-        { name: 'workplaceRiskDetails', label: 'Relevant workplace risk details', type: 'textarea', group: 'Risk' },
       ];
     case 'money-in-transit':
       return [
         { name: 'businessType', label: 'Business type', type: 'text', group: 'Movement of money', required: true },
-        { name: 'typicalAmountCarried', label: `Typical amount carried (${currency})`, type: 'number', group: 'Movement of money', required: true, inputMode: 'decimal' },
-        { name: 'transitFrequency', label: 'How often money is in transit', type: 'select', group: 'Movement of money', required: true, options: [
-          { value: 'daily', label: 'Daily' }, { value: 'weekly', label: 'Weekly' }, { value: 'occasional', label: 'Occasional' }, { value: 'other', label: 'Other' },
-        ] },
-        { name: 'securityArrangements', label: 'Security arrangements', type: 'textarea', group: 'Security', required: true },
-        { name: 'collectionDeliveryDetails', label: 'Collection and delivery details', type: 'textarea', group: 'Security', required: true },
-        { name: 'additionalNotes', label: 'Additional notes', type: 'textarea', group: 'Security' },
       ];
     case 'personal-accident':
       return [
@@ -180,39 +171,65 @@ export function fieldsFor(type: InsuranceType, currency: string): QuoteField[] {
         { name: 'additionalInformation', label: 'Anything else an insurer may need', type: 'textarea', group: 'Benefit' },
       ];
     case 'title-insurance':
-      return [
-        { name: 'propertyLocation', label: 'Property location', type: 'text', group: 'Transaction', required: true },
-        { name: 'propertyType', label: 'Property type', type: 'text', group: 'Transaction', required: true, placeholder: 'House, apartment, land, or other' },
-        { name: 'transactionType', label: 'Transaction type', type: 'select', group: 'Transaction', required: true, options: [
-          { value: 'purchase', label: 'Purchase' }, { value: 'sale', label: 'Sale' }, { value: 'refinance', label: 'Refinance' }, { value: 'other', label: 'Other' },
-        ] },
-        { name: 'estimatedPropertyValue', label: `Estimated property value (${currency})`, type: 'number', group: 'Transaction', required: true, inputMode: 'decimal' },
-        { name: 'applicantRole', label: 'Your role in the transaction', type: 'select', group: 'Transaction', required: true, options: [
-          { value: 'buyer', label: 'Buyer' }, { value: 'seller', label: 'Seller' }, { value: 'lender', label: 'Lender' }, { value: 'other', label: 'Other' },
-        ] },
-        { name: 'additionalInformation', label: 'Other information for the provider', type: 'textarea', group: 'Transaction' },
-      ];
+      return [];
     default:
       return [];
   }
 }
 
-export function defaultDetails(type: InsuranceType): Record<string, string | number | boolean | string[]> {
-  const base: Record<string, string | number | boolean | string[]> = {};
+export type InsuredLine = { item: string; quantity: string; values: string[] };
+
+export const defaultInsuredLines: InsuredLine[] = [
+  { item: 'Office equipments', quantity: '1', values: [''] },
+  { item: 'Office furniture & telephone', quantity: '1', values: [''] },
+];
+
+export const defaultDwellingInsuredLines: InsuredLine[] = [
+  { item: 'Building', quantity: '1', values: [''] },
+  { item: 'Household furniture & contents', quantity: '1', values: [''] },
+];
+
+function copyInsuredLines(lines: InsuredLine[]) {
+  return lines.map((line) => ({ ...line, values: [...line.values] }));
+}
+
+export type EmployeeClass = { employeeClass: string; duties: string; estimatedNumber: string; monthlyIncome: string };
+
+export const defaultEmployeeClasses: EmployeeClass[] = [
+  { employeeClass: 'Office staff', duties: '', estimatedNumber: '', monthlyIncome: '' },
+  { employeeClass: 'Drivers', duties: '', estimatedNumber: '', monthlyIncome: '' },
+];
+
+function copyEmployeeClasses(lines: EmployeeClass[]) {
+  return lines.map((line) => ({ ...line }));
+}
+
+export type MoneyTransfer = { transferAmount: string; startLocation: string; endLocation: string; transferTimes: string };
+
+export const defaultMoneyTransfers: MoneyTransfer[] = [
+  { transferAmount: '', startLocation: 'Shop', endLocation: 'Bank', transferTimes: '' },
+  { transferAmount: '', startLocation: 'Branch', endLocation: 'Head office', transferTimes: '' },
+];
+
+function copyMoneyTransfers(lines: MoneyTransfer[]) {
+  return lines.map((line) => ({ ...line }));
+}
+
+export function defaultDetails(type: InsuranceType): Record<string, string | number | boolean | string[] | InsuredLine[] | EmployeeClass[] | MoneyTransfer[]> {
+  const base: Record<string, string | number | boolean | string[] | InsuredLine[] | EmployeeClass[] | MoneyTransfer[]> = {};
   if (type === 'motor' || type === 'motor-third-party') {
     Object.assign(base, {
       vehicleType: 'private-car', vehicleMake: '', vehicleModel: '', yearOfManufacture: '', registrationAvailable: 'no',
       registrationNumber: '', ownershipStatus: 'owned', estimatedMarketValue: '', vehicleUsage: 'private', fuelType: 'petrol',
-      existingPolicyRenewal: '', existingPolicyRenewalDate: '', preferredCoverage: 'unsure', additionalNotes: '',
+      existingPolicyRenewal: '', existingPolicyRenewalDate: '', preferredCoverage: type === 'motor-third-party' ? 'third-party' : 'comprehensive', additionalNotes: '',
     });
     if (type === 'motor-third-party') base.liabilityNotes = '';
   }
-  if (type === 'travel') Object.assign(base, { destination: '', departureDate: '', returnDate: '', travelerCount: 1, travelerAges: '', benefitPreferences: [], additionalNotes: '' });
-  if (type === 'fire') Object.assign(base, { propertyType: 'commercial', location: '', coverBuilding: false, coverContents: false, estimatedInsuredValue: '', occupancy: '', riskDetails: '' });
-  if (type === 'dwelling-fire') Object.assign(base, { propertyAddress: '', occupantStatus: 'owner', buildingValue: '', contentsValue: '', constructionType: '', riskDetails: '' });
-  if (type === 'workers-compensation') Object.assign(base, { businessActivity: '', employeeCount: '', employeeCategories: '', estimatedAnnualPayroll: '', workplaceRiskDetails: '' });
-  if (type === 'money-in-transit') Object.assign(base, { businessType: '', typicalAmountCarried: '', transitFrequency: 'weekly', securityArrangements: '', collectionDeliveryDetails: '', additionalNotes: '' });
+  if (type === 'travel') Object.assign(base, { nicNo: '', destination: '', departureDate: '', returnDate: '', dependents: 0, purpose: 'holiday', additionalNotes: '' });
+  if (type === 'fire') Object.assign(base, { propertyType: 'commercial', location: '', insuredItems: copyInsuredLines(defaultInsuredLines), occupancy: '', riskDetails: '' });
+  if (type === 'dwelling-fire') Object.assign(base, { propertyAddress: '', occupantStatus: 'owner', insuredItems: copyInsuredLines(defaultDwellingInsuredLines) });
+  if (type === 'workers-compensation') Object.assign(base, { businessActivity: '', employeeClasses: copyEmployeeClasses(defaultEmployeeClasses) });
+  if (type === 'money-in-transit') Object.assign(base, { businessType: '', transfers: copyMoneyTransfers(defaultMoneyTransfers) });
   if (type === 'personal-accident') Object.assign(base, { occupation: '', desiredCoverageAmount: '', benefitPreferences: '', additionalInformation: '' });
-  if (type === 'title-insurance') Object.assign(base, { propertyLocation: '', propertyType: '', transactionType: 'purchase', estimatedPropertyValue: '', applicantRole: 'buyer', additionalInformation: '' });
   return base;
 }

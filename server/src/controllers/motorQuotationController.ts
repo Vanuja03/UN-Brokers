@@ -80,6 +80,11 @@ export const updateMotorQuotation = asyncHandler(async (req, res) => {
   sendData(res, item, 'Quotation updated.');
 });
 
+function quotationFilename(reference: string, vehicleNumber: string) {
+  const vehicle = vehicleNumber.trim().replace(/[^\w.-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+  return `${vehicle ? `${vehicle}-${reference}` : reference}.pdf`;
+}
+
 async function buildPdf(input: Omit<MotorQuotationInput, 'inquiryId'>, referenceNumber: string) {
   const settings = await SiteSettings.findOne();
   return renderMotorQuotationPdf({
@@ -111,7 +116,7 @@ export const previewMotorQuotation = asyncHandler(async (req, res) => {
   const input = motorQuotationSchema.parse(req.body);
   const pdf = await buildPdf(input, 'Preview');
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', 'inline; filename="motor-quotation-preview.pdf"');
+  res.setHeader('Content-Disposition', `inline; filename="${quotationFilename('motor-quotation', input.vehicleNumber)}"`);
   res.send(pdf);
 });
 
@@ -120,6 +125,6 @@ export const downloadMotorQuotation = asyncHandler(async (req, res) => {
   if (!item) throw new AppError(404, 'Quotation not found.');
   const pdf = await buildPdf(item, item.referenceNumber);
   res.setHeader('Content-Type', 'application/pdf');
-  res.setHeader('Content-Disposition', `attachment; filename="${item.referenceNumber}.pdf"`);
+  res.setHeader('Content-Disposition', `attachment; filename="${quotationFilename(item.referenceNumber, item.vehicleNumber)}"`);
   res.send(pdf);
 });

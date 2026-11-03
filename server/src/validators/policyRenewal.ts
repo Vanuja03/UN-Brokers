@@ -38,6 +38,7 @@ export const policyRenewalSchema = z
     speciCo: optionalText(160),
     status: z.enum(['ren', 'new'], { errorMap: () => ({ message: 'Choose Ren or New.' }) }),
     renewalResult: z.enum(['', 'done', 'cancel', 'sold'], { errorMap: () => ({ message: 'Choose done, cancel, or sold.' }) }).default(''),
+    commissionReceived: z.boolean().optional().default(false),
     contactNo: z.string().trim().superRefine((value, ctx) => {
       if (!value) {
         ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'This field is required.' });
@@ -55,3 +56,24 @@ export const policyRenewalSchema = z
   });
 
 export type PolicyRenewalBody = z.infer<typeof policyRenewalSchema>;
+
+const thisYearPremium = z.preprocess((value) => {
+  if (value == null) return '';
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value !== 'string') return '';
+  return value.trim().replace(/,/g, '').replace(/^(?:rs\.?|lkr)\s*/i, '');
+}, z.string().superRefine((value, ctx) => {
+  if (!value) return;
+  if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid amount.' });
+    return;
+  }
+  if (Number(value) > 1_000_000_000) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Amount is too large.' });
+}).transform((value) => (value ? Number(value) : null)));
+
+export const policyRenewalUpdateSchema = z.object({
+  thisYearPremium,
+  renewalResult: z.enum(['', 'done', 'cancel', 'sold'], { errorMap: () => ({ message: 'Choose done, cancel, or sold.' }) }).default(''),
+  commissionReceived: z.boolean().optional().default(false),
+  remarks: optionalText(1000),
+});

@@ -51,6 +51,14 @@ export const positiveAmount = z.coerce
   .positive('Enter an amount greater than zero.')
   .max(1_000_000_000_000, 'Amount is too large.');
 
+export const lkrAmount = z.preprocess((value) => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value !== 'string') return undefined;
+  const trimmed = value.trim().replace(/,/g, '');
+  if (!/^\d+(\.\d{1,2})?$/.test(trimmed)) return undefined;
+  return Number(trimmed);
+}, z.number({ invalid_type_error: 'Enter a valid amount.', required_error: 'Enter a valid amount.' }).positive('Enter an amount greater than zero.').max(1_000_000_000_000, 'Amount is too large.'));
+
 export const optionalAmount = z.preprocess(
   (value) => (value === '' || value === null || value === undefined ? undefined : value),
   positiveAmount.optional(),

@@ -13,13 +13,16 @@ const LABELS: Record<string, string> = {
   vehicleUsage: 'Vehicle usage',
   fuelType: 'Fuel type',
   preferredCoverage: 'Cover type',
-  existingPolicyRenewal: 'Existing policy',
+  existingPolicyRenewal: 'Existing insurer and no claim bonus',
   existingPolicyRenewalDate: 'Renewal date',
   additionalNotes: 'Additional notes',
   liabilityNotes: 'Liability notes',
   destination: 'Destination',
+  nicNo: 'NIC no',
   departureDate: 'Departure date',
-  returnDate: 'Return date',
+  returnDate: 'Arrival date',
+  dependents: 'Dependents',
+  purpose: 'Purpose',
   travelerCount: 'Number of travelers',
   travelerAges: 'Ages of travelers',
   tripDurationDays: 'Trip duration (days)',
@@ -29,6 +32,7 @@ const LABELS: Record<string, string> = {
   coverBuilding: 'Cover for the building',
   coverContents: 'Cover for contents',
   estimatedInsuredValue: 'Estimated insured value',
+  insuredItems: 'Amount to be insured',
   occupancy: 'Occupancy',
   riskDetails: 'Risk details',
   propertyAddress: 'Property address',
@@ -41,11 +45,13 @@ const LABELS: Record<string, string> = {
   employeeCategories: 'Employee categories',
   estimatedAnnualPayroll: 'Estimated annual payroll',
   workplaceRiskDetails: 'Workplace risk details',
+  employeeClasses: 'Classes of employees',
   businessType: 'Business type',
   typicalAmountCarried: 'Typical amount carried',
   transitFrequency: 'Transit frequency',
   securityArrangements: 'Security arrangements',
   collectionDeliveryDetails: 'Collection and delivery',
+  transfers: 'Transfers',
   occupation: 'Occupation',
   desiredCoverageAmount: 'Desired coverage amount',
   additionalInformation: 'Additional information',
@@ -61,7 +67,24 @@ export function detailLines(details: Record<string, unknown>, currency: string) 
     .map(([key, value]) => {
       const label = LABELS[key] ?? key.replace(/([A-Z])/g, ' $1').replace(/^./, (char) => char.toUpperCase());
       const moneyKeys = ['estimatedMarketValue', 'estimatedInsuredValue', 'buildingValue', 'contentsValue', 'estimatedAnnualPayroll', 'typicalAmountCarried', 'desiredCoverageAmount', 'estimatedPropertyValue'];
-      const rendered = Array.isArray(value) ? value.join(', ') : String(value);
+      const rendered = Array.isArray(value)
+        ? value.map((entry) => {
+          if (entry && typeof entry === 'object' && 'startLocation' in entry) {
+            const line = entry as { transferAmount?: number; startLocation?: string; endLocation?: string; transferTimes?: number };
+            return `${currency} ${line.transferAmount} · ${line.startLocation} to ${line.endLocation} · ${line.transferTimes} times`;
+          }
+          if (entry && typeof entry === 'object' && 'employeeClass' in entry) {
+            const line = entry as { employeeClass?: string; duties?: string; estimatedNumber?: number; monthlyIncome?: number };
+            return `${line.employeeClass} (${line.duties}) ${line.estimatedNumber}, ${currency} ${line.monthlyIncome}`;
+          }
+          if (entry && typeof entry === 'object' && 'item' in entry) {
+            const line = entry as { item?: string; quantity?: number; values?: Array<number | string>; total?: number };
+            const amounts = Array.isArray(line.values) ? line.values.map((amount) => `${currency} ${amount}`).join(', ') : `${currency} ${line.total ?? ''}`;
+            return `${line.item} (${line.quantity}) ${amounts}`;
+          }
+          return String(entry);
+        }).join('; ')
+        : String(value);
       const text = moneyKeys.includes(key) ? `${currency} ${rendered}` : rendered;
       return { label, text };
     });

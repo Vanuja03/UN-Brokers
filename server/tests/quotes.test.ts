@@ -48,18 +48,19 @@ describe('quotation inquiries', () => {
     expect(missingRegistration.body.errors.some((error: { field: string }) => error.field.includes('registrationNumber'))).toBe(true);
   });
 
-  it('validates travel dates and fire cover choices', async () => {
+  it('validates travel dates and fire item values', async () => {
     const travel = await request(app)
       .post('/api/quotes')
       .send({
         ...motorQuote,
         insuranceType: 'travel',
         insuranceDetails: {
+          nicNo: '123456789V',
           destination: 'Singapore',
           departureDate: '2026-12-10',
           returnDate: '2026-12-01',
-          travelerCount: 2,
-          travelerAges: '34, 32',
+          dependents: 1,
+          purpose: 'holiday',
         },
       });
     expect(travel.status).toBe(400);
@@ -73,10 +74,8 @@ describe('quotation inquiries', () => {
         insuranceDetails: {
           propertyType: 'office',
           location: 'Colombo 03',
-          coverBuilding: false,
-          coverContents: false,
-          estimatedInsuredValue: 10000000,
           occupancy: 'Office',
+          insuredItems: [{ item: 'Office equipments', quantity: 2, values: [100000] }],
         },
       });
     expect(fire.status).toBe(400);

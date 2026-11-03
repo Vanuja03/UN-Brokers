@@ -15,4 +15,6 @@ export const insurerPartners: InsurerLogo[] = [
   { name: 'Co-operative Insurance', logo: '/partners/cooperative.png', website: 'https://www.ci.lk/' },
   { name: 'Sanasa General', logo: '/partners/sanasa-general.png', website: 'https://www.sgic.lk/' },
   { name: 'Amana Takaful', logo: '/partners/takaful.png', website: 'https://www.takaful.lk/' },
+  { name: 'Orient Insurance', logo: '/partners/orient.jpg', website: 'https://orientinsurance.lk/' },
+  { name: 'MBSL Insurance', logo: '/partners/mbsl.png', website: 'https://www.mbslinsurance.lk/' },
 ];

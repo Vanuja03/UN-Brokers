@@ -112,19 +112,19 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
 
     const titleX = logoX + logoSize + 12;
     const titleWidth = photoX - 12 - titleX;
-    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(16).text(input.companyName || 'UN Insurance Brokers', titleX, 18, {
+    doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(17).text(input.companyName || 'UN Insurance Brokers', titleX, 16, {
       width: titleWidth,
       align: 'center',
     });
-    doc.fillColor(gold).font('Helvetica-Bold').fontSize(11).text('QUOTATION', titleX, 40, { width: titleWidth, align: 'center' });
-    doc.fillColor('#ffffff').font('Helvetica').fontSize(9).text(`${cover}   ·   ${displayDate(input.quotationDate)}   ·   ${input.referenceNumber}`, titleX, 58, {
+    doc.fillColor(gold).font('Helvetica-Bold').fontSize(12).text('QUOTATION', titleX, 40, { width: titleWidth, align: 'center' });
+    doc.fillColor('#ffffff').font('Helvetica').fontSize(10).text(`${cover}   ·   ${displayDate(input.quotationDate)}   ·   ${input.referenceNumber}`, titleX, 58, {
       width: titleWidth,
       align: 'center',
     });
 
-    let y = headerHeight + 18;
-    doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text(input.customerName, left, y);
-    y += 18;
+    let y = headerHeight + 16;
+    doc.fillColor(navy).font('Helvetica-Bold').fontSize(13).text(input.customerName, left, y);
+    y += 19;
     const facts = [
       ['Vehicle', input.vehicleNumber],
       ['Lease or loan no.', input.leaseOrLoanNo],
@@ -135,53 +135,53 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
       ['Model', input.model],
       ['Fuel', input.fuel],
     ];
-    doc.font('Helvetica').fontSize(8);
+    doc.font('Helvetica').fontSize(9);
     facts.forEach((fact, index) => {
       const column = index % 4;
       const row = Math.floor(index / 4);
       const x = left + column * (width / 4);
-      doc.fillColor('#64748b').text(fact[0], x, y + row * 16, { width: 70, continued: false });
-      doc.fillColor(navy).font('Helvetica-Bold').text(cell(fact[1]), x + 72, y + row * 16, { width: width / 4 - 80 });
+      doc.fillColor('#64748b').text(fact[0], x, y + row * 17, { width: 96, continued: false });
+      doc.fillColor(navy).font('Helvetica-Bold').text(cell(fact[1]), x + 98, y + row * 17, { width: width / 4 - 106 });
       doc.font('Helvetica');
     });
-    y += 40;
+    y += 42;
 
     const intro = input.insuranceType === 'motor'
       ? 'Thank you for asking UN Insurance Brokers to compare comprehensive motor cover for this vehicle. The figures below are the quotations we have obtained. This document is not a policy. Cover begins only if you accept an insurer’s terms and that insurer issues the policy.'
       : 'Thank you for asking UN Insurance Brokers to compare third-party motor cover for this vehicle. The figures below are the quotations we have obtained. This document is not a policy. Cover begins only if you accept an insurer’s terms and that insurer issues the policy.';
-    doc.fillColor(ink).font('Helvetica').fontSize(8).text(intro, left, y, { width });
+    doc.fillColor(ink).font('Helvetica').fontSize(9).text(intro, left, y, { width });
     y = doc.y + 8;
     const contact = [input.preparedBy, input.preparedByPhone, input.preparedByEmail].filter(Boolean).join('  |  ');
     if (contact) {
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(8).text(`Prepared by  ${contact}`, left, y, { width });
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(9).text(`Prepared by  ${contact}`, left, y, { width });
       y = doc.y + 10;
     }
 
-    const labelWidth = 150;
+    const labelWidth = 196;
     const columnWidth = (width - labelWidth) / input.insurers.length;
     const drawHeader = () => {
-      const headerHeight = 28;
-      doc.rect(left, y, width, headerHeight).fill(navy);
-      doc.fillColor(gold).font('Helvetica-Bold').fontSize(7).text('Benefit', left + 4, y + 10, { width: labelWidth - 8 });
+      const benefitHeaderHeight = 30;
+      doc.rect(left, y, width, benefitHeaderHeight).fill(navy);
+      doc.fillColor(gold).font('Helvetica-Bold').fontSize(8.5).text('Benefit', left + 4, y + 10, { width: labelWidth - 8 });
       input.insurers.forEach((insurer, index) => {
-        doc.fillColor('#ffffff').text(insurer, left + labelWidth + index * columnWidth + 3, y + 6, {
-          width: columnWidth - 6,
-          height: 18,
+        doc.fillColor('#ffffff').text(insurer, left + labelWidth + index * columnWidth + 4, y + 6, {
+          width: columnWidth - 8,
+          height: 22,
           ellipsis: true,
         });
       });
-      y += headerHeight;
+      y += benefitHeaderHeight;
     };
     drawHeader();
 
     input.rows.forEach((row, rowIndex) => {
-      doc.font('Helvetica').fontSize(7);
+      doc.font('Helvetica').fontSize(8.5);
       const samples = [row.label, ...row.values];
       const textHeight = Math.max(
         ...samples.map((sample, index) => doc.heightOfString(cell(sample), { width: (index === 0 ? labelWidth : columnWidth) - 8 })),
       );
-      const rowHeight = Math.min(42, Math.max(18, textHeight + 8));
-      if (y + rowHeight > doc.page.height - 46) {
+      const rowHeight = Math.min(46, Math.max(22, textHeight + 9));
+      if (y + rowHeight > doc.page.height - 32) {
         doc.addPage({ size: 'A4', layout: 'landscape', margin: 28 });
         paintWatermark(doc);
         y = 36;
@@ -189,11 +189,11 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
       }
       if (rowIndex % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
-      doc.fillColor(navy).font('Helvetica-Bold').text(row.label, left + 4, y + 4, { width: labelWidth - 8, height: rowHeight - 6, ellipsis: true });
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(8.5).text(row.label, left + 4, y + 5, { width: labelWidth - 8, height: rowHeight - 8, ellipsis: true });
       row.values.forEach((value, index) => {
-        doc.fillColor(ink).font('Helvetica').text(cell(value), left + labelWidth + index * columnWidth + 3, y + 4, {
-          width: columnWidth - 6,
-          height: rowHeight - 6,
+        doc.fillColor(ink).font('Helvetica').fontSize(8.5).text(cell(value), left + labelWidth + index * columnWidth + 4, y + 5, {
+          width: columnWidth - 8,
+          height: rowHeight - 8,
           ellipsis: true,
         });
       });
@@ -202,7 +202,7 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
 
     const footer = [input.companyName, input.telephone, input.email, input.address].filter(Boolean).join('   ·   ');
     doc.page.margins.bottom = 0;
-    doc.fillColor('#64748b').font('Helvetica').fontSize(7).text(footer || 'UN Insurance Brokers', left, doc.page.height - 22, {
+    doc.fillColor('#64748b').font('Helvetica').fontSize(8).text(footer || 'UN Insurance Brokers', left, doc.page.height - 22, {
       width,
       height: 12,
       lineBreak: false,
