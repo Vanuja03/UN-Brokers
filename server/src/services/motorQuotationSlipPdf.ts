@@ -10,6 +10,7 @@ const mist = '#f4f7fb';
 const ink = '#334155';
 
 type ValuedCover = { selected: boolean; value: string };
+type MultipliedCover = ValuedCover & { multiple: string };
 
 export type QuotationSlipPdfInput = {
   referenceNumber: string;
@@ -28,8 +29,9 @@ export type QuotationSlipPdfInput = {
     flood: boolean;
     towing: ValuedCover;
     wci: ValuedCover;
-    pab: ValuedCover;
-    ll: ValuedCover;
+    gt: ValuedCover;
+    pab: MultipliedCover;
+    ll: MultipliedCover;
     tpd: ValuedCover;
     hp: ValuedCover;
   };
@@ -47,8 +49,9 @@ const coverRows: { label: string; selected: (input: QuotationSlipPdfInput) => bo
   { label: 'Flood', selected: (input) => input.covers.flood, value: () => '' },
   { label: 'Towing charges', selected: (input) => input.covers.towing.selected, value: (input) => input.covers.towing.value },
   { label: 'WCI', selected: (input) => input.covers.wci.selected, value: (input) => input.covers.wci.value },
-  { label: 'PAB', selected: (input) => input.covers.pab.selected, value: (input) => input.covers.pab.value },
-  { label: 'LL', selected: (input) => input.covers.ll.selected, value: (input) => input.covers.ll.value },
+  { label: 'GT', selected: (input) => input.covers.gt.selected, value: (input) => input.covers.gt.value },
+  { label: 'PAB', selected: (input) => input.covers.pab.selected, value: (input) => multiplied(input.covers.pab) },
+  { label: 'LL', selected: (input) => input.covers.ll.selected, value: (input) => multiplied(input.covers.ll) },
   { label: 'TPD', selected: (input) => input.covers.tpd.selected, value: (input) => input.covers.tpd.value },
   { label: 'H/P', selected: (input) => input.covers.hp.selected, value: (input) => input.covers.hp.value },
 ];
@@ -83,11 +86,16 @@ function displayDate(value: string) {
   });
 }
 
+function multiplied(cover: MultipliedCover) {
+  if (cover.value && cover.multiple) return `${cover.value} × ${cover.multiple}`;
+  return cover.value || cover.multiple;
+}
+
 function tick(doc: PdfDoc, x: number, y: number, selected: boolean) {
-  doc.roundedRect(x, y, 12, 12, 2).lineWidth(1).strokeColor(navy).stroke();
+  doc.roundedRect(x, y, 14, 14, 2).lineWidth(1.2).strokeColor(navy).stroke();
   if (!selected) return;
   doc.save();
-  doc.moveTo(x + 2.5, y + 6).lineTo(x + 5, y + 9).lineTo(x + 9.5, y + 3).lineWidth(1.6).strokeColor(navy).stroke();
+  doc.moveTo(x + 3, y + 7).lineTo(x + 6, y + 10.5).lineTo(x + 11, y + 3.5).lineWidth(1.8).strokeColor(navy).stroke();
   doc.restore();
 }
 
@@ -133,14 +141,14 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
       align: 'center',
     });
 
-    let y = headerHeight + 22;
-    doc.fillColor(ink).font('Helvetica').fontSize(10).text(
+    let y = headerHeight + 20;
+    doc.fillColor(ink).font('Helvetica').fontSize(11).text(
       'UN Insurance Brokers requests a quotation from the insurance company for this vehicle and the ticked covers. This slip is not a policy. Cover begins only if an insurer accepts the risk and issues the policy.',
       left,
       y,
       { width },
     );
-    y = doc.y + 14;
+    y = doc.y + 16;
 
     const facts: [string, string][] = [
       ['Customer name', input.customerName],
@@ -153,30 +161,30 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
     ];
     const labelWidth = 150;
     facts.forEach((fact, index) => {
-      const rowHeight = 24;
+      const rowHeight = 30;
       if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
-      doc.fillColor('#64748b').font('Helvetica').fontSize(9).text(fact[0], left + 8, y + 7, { width: labelWidth - 12 });
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(10).text(fact[1], left + labelWidth, y + 6, { width: width - labelWidth - 10, ellipsis: true });
+      doc.fillColor('#64748b').font('Helvetica').fontSize(11).text(fact[0], left + 8, y + 9, { width: labelWidth - 12 });
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text(fact[1], left + labelWidth, y + 8, { width: width - labelWidth - 10, ellipsis: true });
       y += rowHeight;
     });
 
-    y += 16;
-    doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text('Covers', left, y);
     y += 18;
-    doc.rect(left, y, width, 22).fill(navy);
-    doc.fillColor(gold).font('Helvetica-Bold').fontSize(9).text('Cover', left + 28, y + 6, { width: 180 });
-    doc.fillColor('#ffffff').text('Requested', left + 220, y + 6, { width: width - 230 });
+    doc.fillColor(navy).font('Helvetica-Bold').fontSize(14).text('Covers', left, y);
     y += 22;
+    doc.rect(left, y, width, 26).fill(navy);
+    doc.fillColor(gold).font('Helvetica-Bold').fontSize(11).text('Cover', left + 32, y + 7, { width: 180 });
+    doc.fillColor('#ffffff').text('Requested', left + 220, y + 7, { width: width - 230 });
+    y += 26;
 
     coverRows.forEach((row, index) => {
       const selected = row.selected(input);
-      const rowHeight = 24;
+      const rowHeight = 30;
       if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
-      tick(doc, left + 8, y + 6, selected);
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(10).text(row.label, left + 28, y + 6, { width: 180 });
-      doc.fillColor(selected ? ink : '#94a3b8').font('Helvetica').fontSize(10).text(selected ? row.value(input) || 'Yes' : '—', left + 220, y + 6, {
+      tick(doc, left + 8, y + 8, selected);
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text(row.label, left + 32, y + 8, { width: 180 });
+      doc.fillColor(selected ? ink : '#94a3b8').font('Helvetica').fontSize(12).text(selected ? row.value(input) || 'Yes' : '—', left + 220, y + 8, {
         width: width - 230,
         ellipsis: true,
       });
@@ -184,15 +192,15 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
     });
 
     if (input.preparedBy) {
-      y += 14;
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(9).text(`Prepared by  ${input.preparedBy}`, left, y, { width });
+      y += 16;
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(11).text(`Prepared by  ${input.preparedBy}`, left, y, { width });
     }
 
     const footer = [input.companyName, input.telephone, input.email, input.address].filter(Boolean).join('   ·   ');
     doc.page.margins.bottom = 0;
-    doc.fillColor('#64748b').font('Helvetica').fontSize(8).text(footer || 'UN Insurance Brokers', left, doc.page.height - 28, {
+    doc.fillColor('#64748b').font('Helvetica').fontSize(9).text(footer || 'UN Insurance Brokers', left, doc.page.height - 34, {
       width,
-      height: 12,
+      height: 16,
       lineBreak: false,
     });
     doc.end();

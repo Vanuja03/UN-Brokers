@@ -27,7 +27,7 @@ export const motorQuotationSchema = z
         }),
       )
       .min(1)
-      .max(20),
+      .max(40),
     inquiryId: z.string().trim().optional().or(z.literal('')),
   })
   .superRefine((value, context) => {

@@ -8,6 +8,15 @@ const valuedCoverSchema = new Schema(
   { _id: false },
 );
 
+const multipliedCoverSchema = new Schema(
+  {
+    selected: { type: Boolean, default: false },
+    value: { type: String, default: '', trim: true, maxlength: 80 },
+    multiple: { type: String, default: '', trim: true, maxlength: 40 },
+  },
+  { _id: false },
+);
+
 const motorQuotationSlipSchema = new Schema(
   {
     referenceNumber: { type: String, required: true, unique: true, index: true },
@@ -25,8 +34,9 @@ const motorQuotationSlipSchema = new Schema(
       flood: { type: Boolean, default: false },
       towing: { type: valuedCoverSchema, default: () => ({}) },
       wci: { type: valuedCoverSchema, default: () => ({}) },
-      pab: { type: valuedCoverSchema, default: () => ({}) },
-      ll: { type: valuedCoverSchema, default: () => ({}) },
+      gt: { type: valuedCoverSchema, default: () => ({}) },
+      pab: { type: multipliedCoverSchema, default: () => ({}) },
+      ll: { type: multipliedCoverSchema, default: () => ({}) },
       tpd: { type: valuedCoverSchema, default: () => ({}) },
       hp: { type: valuedCoverSchema, default: () => ({}) },
     },

@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { blankQuotation, isYesNoBenefit, resizeInsurers, rowLabels, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
+import { blankQuotation, isExtraClaim, isYesNoBenefit, resizeInsurers, rowsFor, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
 import { api, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { downloadPdf } from './MotorQuotationsPage';
@@ -114,7 +114,7 @@ export function MotorQuotationFormPage() {
       return {
         ...current,
         insuranceType,
-        rows: rowLabels(insuranceType).map((label) => ({ label, values: insurers.map(() => '') })),
+        rows: rowsFor(insuranceType, insurers),
       };
     });
   }
@@ -122,6 +122,10 @@ export function MotorQuotationFormPage() {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft) return;
+    if (draft.rows.some((row, index) => isExtraClaim(draft.insuranceType, index) && !row.label.trim())) {
+      setError('Enter a name for each added claim.');
+      return;
+    }
     setPending(true);
     setError('');
     const download = (event.nativeEvent as SubmitEvent).submitter?.getAttribute('value') === 'download';
@@ -144,6 +148,10 @@ export function MotorQuotationFormPage() {
     if (!draft) return;
     if (draft.customerName.trim().length < 2) {
       setError('Enter the customer name before showing a preview.');
+      return;
+    }
+    if (draft.rows.some((row, index) => isExtraClaim(draft.insuranceType, index) && !row.label.trim())) {
+      setError('Enter a name for each added claim.');
       return;
     }
     setPending(true);
@@ -259,7 +267,20 @@ export function MotorQuotationFormPage() {
         </div>
       </section>
       <section className="overflow-x-auto rounded-2xl border border-slate-200 bg-white p-5">
-        <h2 className="font-bold">Comparison</h2>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="font-bold">Comparison</h2>
+            <p className="mt-1 text-sm text-slate-600">Click & Go can be renamed. Add another claim when you need one, then enter its name and a value for each insurer.</p>
+          </div>
+          <button
+            type="button"
+            className="text-sm font-semibold text-navy-900 disabled:opacity-50"
+            disabled={draft.rows.length >= 40}
+            onClick={() => update({ rows: [...draft.rows, { label: '', values: draft.insurers.map(() => '') }] })}
+          >
+            Add claim
+          </button>
+        </div>
         <table className="mt-3 min-w-[720px] w-full border-collapse text-sm">
           <thead>
             <tr className="bg-navy-900 text-left text-white">
@@ -269,8 +290,29 @@ export function MotorQuotationFormPage() {
           </thead>
           <tbody>
             {draft.rows.map((row, rowIndex) => (
-              <tr key={row.label} className={rowIndex % 2 === 0 ? 'bg-navy-50' : 'bg-white'}>
-                <th className="px-3 py-2 text-left font-semibold text-navy-900">{row.label}</th>
+              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-navy-50' : 'bg-white'}>
+                <th className="px-3 py-2 text-left font-semibold text-navy-900">
+                  {isExtraClaim(draft.insuranceType, rowIndex) ? (
+                    <div className="flex min-w-48 items-center gap-2">
+                      <input
+                        className="field"
+                        aria-label={`Claim ${rowIndex + 1} name`}
+                        placeholder="Claim name"
+                        value={row.label}
+                        onChange={(event) => update({
+                          rows: draft.rows.map((item, itemIndex) => itemIndex === rowIndex ? { ...item, label: event.target.value } : item),
+                        })}
+                      />
+                      <button
+                        type="button"
+                        className="shrink-0 text-sm text-red-800"
+                        onClick={() => update({ rows: draft.rows.filter((_, itemIndex) => itemIndex !== rowIndex) })}
+                      >
+                        Remove
+                      </button>
+                    </div>
+                  ) : row.label}
+                </th>
                 {row.values.map((value, valueIndex) => (
                   <td key={`${row.label}-${valueIndex}`} className="px-2 py-2">
                     {isYesNoBenefit(row.label) ? (

@@ -36,7 +36,6 @@ const comprehensiveRows = [
   'Personal accident benefit cover',
   'Special windscreen cover',
   'Free taxi allowance',
-  'Click & Go',
 ];
 
 export const yesNoBenefitLabels = [
@@ -45,7 +44,6 @@ export const yesNoBenefitLabels = [
   'Flood and natural perils',
   'Strike, riot and civil commotion',
   'Terrorism',
-  'Click & Go',
 ] as const;
 
 const yesNoBenefitSet = new Set<string>(yesNoBenefitLabels);
@@ -76,6 +74,16 @@ export function rowLabels(type: MotorCover) {
   return type === 'motor' ? comprehensiveRows : thirdPartyRows;
 }
 
+export function rowsFor(type: MotorCover, insurers: string[]): ComparisonRow[] {
+  const rows = rowLabels(type).map((label) => ({ label, values: insurers.map(() => '') }));
+  if (type === 'motor') rows.push({ label: 'Click & Go', values: insurers.map(() => '') });
+  return rows;
+}
+
+export function isExtraClaim(type: MotorCover, index: number) {
+  return index >= rowLabels(type).length;
+}
+
 export function blankQuotation(type: MotorCover, preparedBy = ''): MotorQuotationDraft {
   const insurers = [...defaultInsurers];
   return {
@@ -94,7 +102,7 @@ export function blankQuotation(type: MotorCover, preparedBy = ''): MotorQuotatio
     preparedByPhone: '',
     preparedByEmail: '',
     insurers,
-    rows: rowLabels(type).map((label) => ({ label, values: insurers.map(() => '') })),
+    rows: rowsFor(type, insurers),
   };
 }
 

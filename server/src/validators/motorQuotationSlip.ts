@@ -6,7 +6,14 @@ const coverValue = z.object({
   value: z.string().trim().max(80, 'Enter 80 characters or fewer.').optional().default(''),
 });
 
-const valuedKeys = ['towing', 'wci', 'pab', 'll', 'tpd', 'hp'] as const;
+const coverMultiple = coverValue.extend({
+  multiple: z.string().trim().max(40, 'Enter 40 characters or fewer.').optional().default(''),
+});
+
+const vehicleTypes = ['Private car', 'Motorcycle', 'Three-wheeler', 'Van', 'Lorry', 'Bus', 'Prime mover', 'Other'] as const;
+const vehicleUsages = ['Private', 'Hiring', 'Rent a car'] as const;
+const valuedKeys = ['towing', 'wci', 'gt', 'tpd', 'hp'] as const;
+const multipliedKeys = ['pab', 'll'] as const;
 
 export const motorQuotationSlipSchema = z
   .object({
@@ -22,8 +29,8 @@ export const motorQuotationSlipSchema = z
         const year = Number(value);
         return year >= 1950 && year <= new Date().getFullYear() + 1;
       }, 'Enter a valid year.'),
-    vehicleType: textField(1, 80),
-    vehicleUsage: textField(1, 80),
+    vehicleType: z.enum(vehicleTypes, { errorMap: () => ({ message: 'Choose a vehicle type.' }) }),
+    vehicleUsage: z.enum(vehicleUsages, { errorMap: () => ({ message: 'Choose a vehicle usage.' }) }),
     covers: z
       .object({
         basic: z.boolean(),
@@ -32,8 +39,9 @@ export const motorQuotationSlipSchema = z
         flood: z.boolean(),
         towing: coverValue,
         wci: coverValue,
-        pab: coverValue,
-        ll: coverValue,
+        gt: coverValue,
+        pab: coverMultiple,
+        ll: coverMultiple,
         tpd: coverValue,
         hp: coverValue,
       })
@@ -43,7 +51,12 @@ export const motorQuotationSlipSchema = z
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a value for this cover.', path: [key, 'value'] });
           }
         }
-        const selected = covers.basic || covers.srcc || covers.tc || covers.flood || valuedKeys.some((key) => covers[key].selected);
+        for (const key of multipliedKeys) {
+          if (!covers[key].selected) continue;
+          if (!covers[key].value.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a value for this cover.', path: [key, 'value'] });
+          if (!covers[key].multiple.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter the multiplication.', path: [key, 'multiple'] });
+        }
+        const selected = covers.basic || covers.srcc || covers.tc || covers.flood || valuedKeys.some((key) => covers[key].selected) || multipliedKeys.some((key) => covers[key].selected);
         if (!selected) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tick at least one cover.', path: ['basic'] });
       })
       .transform((covers) => ({
@@ -53,8 +66,17 @@ export const motorQuotationSlipSchema = z
         flood: covers.flood,
         towing: { selected: covers.towing.selected, value: covers.towing.selected ? covers.towing.value.trim() : '' },
         wci: { selected: covers.wci.selected, value: covers.wci.selected ? covers.wci.value.trim() : '' },
-        pab: { selected: covers.pab.selected, value: covers.pab.selected ? covers.pab.value.trim() : '' },
-        ll: { selected: covers.ll.selected, value: covers.ll.selected ? covers.ll.value.trim() : '' },
+        gt: { selected: covers.gt.selected, value: covers.gt.selected ? covers.gt.value.trim() : '' },
+        pab: {
+          selected: covers.pab.selected,
+          value: covers.pab.selected ? covers.pab.value.trim() : '',
+          multiple: covers.pab.selected ? covers.pab.multiple.trim() : '',
+        },
+        ll: {
+          selected: covers.ll.selected,
+          value: covers.ll.selected ? covers.ll.value.trim() : '',
+          multiple: covers.ll.selected ? covers.ll.multiple.trim() : '',
+        },
         tpd: { selected: covers.tpd.selected, value: covers.tpd.selected ? covers.tpd.value.trim() : '' },
         hp: { selected: covers.hp.selected, value: covers.hp.selected ? covers.hp.value.trim() : '' },
       })),

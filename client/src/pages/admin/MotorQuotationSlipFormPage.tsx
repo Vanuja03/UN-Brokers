@@ -4,6 +4,7 @@ import { api, getErrorMessage, getFieldErrors } from '../../services/api';
 import { downloadSlip } from './MotorQuotationSlipsPage';
 
 type ValuedCover = { selected: boolean; value: string };
+type MultipliedCover = ValuedCover & { multiple: string };
 
 type SlipDraft = {
   customerName: string;
@@ -20,8 +21,9 @@ type SlipDraft = {
     flood: boolean;
     towing: ValuedCover;
     wci: ValuedCover;
-    pab: ValuedCover;
-    ll: ValuedCover;
+    gt: ValuedCover;
+    pab: MultipliedCover;
+    ll: MultipliedCover;
     tpd: ValuedCover;
     hp: ValuedCover;
   };
@@ -39,30 +41,47 @@ const tickOnly = [
 const tickValue = [
   { key: 'towing', label: 'Towing charges' },
   { key: 'wci', label: 'WCI' },
+  { key: 'gt', label: 'GT' },
+] as const;
+
+const tickTimes = [
   { key: 'pab', label: 'PAB' },
   { key: 'll', label: 'LL' },
+] as const;
+
+const tickValueAfter = [
   { key: 'tpd', label: 'TPD' },
   { key: 'hp', label: 'H/P' },
 ] as const;
 
-const vehicleTypeLabels: Record<string, string> = {
-  'private-car': 'Private car',
-  motorcycle: 'Motorcycle',
-  'three-wheeler': 'Three-wheeler',
-  van: 'Van',
-  lorry: 'Lorry',
-  bus: 'Bus',
-  other: 'Other',
-};
+const vehicleTypes = [
+  { value: 'private-car', label: 'Private car' },
+  { value: 'motorcycle', label: 'Motorcycle' },
+  { value: 'three-wheeler', label: 'Three-wheeler' },
+  { value: 'van', label: 'Van' },
+  { value: 'lorry', label: 'Lorry' },
+  { value: 'bus', label: 'Bus' },
+  { value: 'prime-mover', label: 'Prime mover' },
+  { value: 'other', label: 'Other' },
+];
 
-const usageLabels: Record<string, string> = {
-  private: 'Private',
-  hiring: 'Hiring',
-  'rent-a-car': 'Rent a car',
-};
+const usageTypes = [
+  { value: 'private', label: 'Private' },
+  { value: 'hiring', label: 'Hiring' },
+  { value: 'rent-a-car', label: 'Rent a car' },
+];
+
+function listed(value: string, options: { value: string; label: string }[]) {
+  const found = options.find((item) => item.label.toLowerCase() === value.trim().toLowerCase() || item.value === value.trim().toLowerCase());
+  return found?.label || '';
+}
 
 function blankCover(): ValuedCover {
   return { selected: false, value: '' };
+}
+
+function blankTimes(): MultipliedCover {
+  return { selected: false, value: '', multiple: '' };
 }
 
 function blankSlip(): SlipDraft {
@@ -81,8 +100,9 @@ function blankSlip(): SlipDraft {
       flood: false,
       towing: blankCover(),
       wci: blankCover(),
-      pab: blankCover(),
-      ll: blankCover(),
+      gt: blankCover(),
+      pab: blankTimes(),
+      ll: blankTimes(),
       tpd: blankCover(),
       hp: blankCover(),
     },
@@ -102,10 +122,8 @@ function applyInquiry(draft: SlipDraft, quote: { customerName?: string; insuranc
   draft.make = asText(details.vehicleMake) || draft.make;
   draft.model = asText(details.vehicleModel) || draft.model;
   draft.yearOfManufacture = asText(details.yearOfManufacture) || draft.yearOfManufacture;
-  const usage = asText(details.vehicleUsage);
-  draft.vehicleUsage = usageLabels[usage] || usage || draft.vehicleUsage;
-  const type = asText(details.vehicleType);
-  draft.vehicleType = vehicleTypeLabels[type] || type || draft.vehicleType;
+  draft.vehicleUsage = listed(asText(details.vehicleUsage), usageTypes) || draft.vehicleUsage;
+  draft.vehicleType = listed(asText(details.vehicleType), vehicleTypes) || draft.vehicleType;
 }
 
 export function MotorQuotationSlipFormPage() {
@@ -124,10 +142,19 @@ export function MotorQuotationSlipFormPage() {
         const response = await api.get(`/motor-quotation-slips/${id}`);
         const saved = response.data.data as SlipDraft & { inquiryId?: string | null; motorQuotationId?: string | null };
         if (!cancelled) {
+          const base = blankSlip();
           setDraft({
-            ...blankSlip(),
+            ...base,
             ...saved,
-            covers: { ...blankSlip().covers, ...saved.covers },
+            vehicleType: listed(saved.vehicleType || '', vehicleTypes),
+            vehicleUsage: listed(saved.vehicleUsage || '', usageTypes),
+            covers: {
+              ...base.covers,
+              ...saved.covers,
+              gt: { ...base.covers.gt, ...saved.covers?.gt },
+              pab: { ...base.covers.pab, ...saved.covers?.pab },
+              ll: { ...base.covers.ll, ...saved.covers?.ll },
+            },
             inquiryId: saved.inquiryId || '',
             motorQuotationId: saved.motorQuotationId || '',
           });
@@ -153,7 +180,7 @@ export function MotorQuotationSlipFormPage() {
         next.make = quotation.make || '';
         next.model = quotation.model || '';
         next.yearOfManufacture = quotation.yearOfManufacture || '';
-        next.vehicleUsage = quotation.usage || '';
+        next.vehicleUsage = listed(quotation.usage || '', usageTypes);
         next.motorQuotationId = quotationId;
         if (quotation.inquiryId) {
           next.inquiryId = quotation.inquiryId;
@@ -205,10 +232,17 @@ export function MotorQuotationSlipFormPage() {
       const current = new Date().getFullYear() + 1;
       if (!/^\d{4}$/.test(year) || Number(year) < 1950 || Number(year) > current) errors.yearOfManufacture = 'Enter a valid four-digit year.';
     }
-    for (const cover of tickValue) {
+    for (const cover of [...tickValue, ...tickValueAfter]) {
       if (values.covers[cover.key].selected && !values.covers[cover.key].value.trim()) errors[`covers.${cover.key}.value`] = 'Enter a value for this cover.';
     }
-    const any = tickOnly.some((cover) => values.covers[cover.key]) || tickValue.some((cover) => values.covers[cover.key].selected);
+    for (const cover of tickTimes) {
+      if (!values.covers[cover.key].selected) continue;
+      if (!values.covers[cover.key].value.trim()) errors[`covers.${cover.key}.value`] = 'Enter a value for this cover.';
+      if (!values.covers[cover.key].multiple.trim()) errors[`covers.${cover.key}.multiple`] = 'Enter the multiplication.';
+    }
+    const any = tickOnly.some((cover) => values.covers[cover.key])
+      || [...tickValue, ...tickValueAfter].some((cover) => values.covers[cover.key].selected)
+      || tickTimes.some((cover) => values.covers[cover.key].selected);
     if (!any) errors['covers.basic'] = 'Tick at least one cover.';
     return errors;
   }
@@ -266,12 +300,12 @@ export function MotorQuotationSlipFormPage() {
         <Field label="Make" value={draft.make} error={fieldErrors.make} onChange={(value) => update({ make: value })} />
         <Field label="Model" value={draft.model} error={fieldErrors.model} onChange={(value) => update({ model: value })} />
         <Field label="Manufacturing year" value={draft.yearOfManufacture} error={fieldErrors.yearOfManufacture} inputMode="numeric" onChange={(value) => update({ yearOfManufacture: value })} />
-        <Field label="Vehicle type" value={draft.vehicleType} error={fieldErrors.vehicleType} onChange={(value) => update({ vehicleType: value })} />
-        <Field label="Vehicle usage" value={draft.vehicleUsage} error={fieldErrors.vehicleUsage} onChange={(value) => update({ vehicleUsage: value })} />
+        <SelectField label="Vehicle type" value={draft.vehicleType} options={vehicleTypes.map((item) => item.label)} error={fieldErrors.vehicleType} onChange={(value) => update({ vehicleType: value })} />
+        <SelectField label="Vehicle usage" value={draft.vehicleUsage} options={usageTypes.map((item) => item.label)} error={fieldErrors.vehicleUsage} onChange={(value) => update({ vehicleUsage: value })} />
       </section>
       <fieldset className="rounded-2xl border border-slate-200 bg-white p-5">
         <legend className="px-1 text-lg font-bold">Covers</legend>
-        <p className="mt-1 text-sm text-slate-600">Tick the covers the insurance company should quote. Towing charges, WCI, PAB, LL, TPD, and H/P also need a value.</p>
+        <p className="mt-1 text-sm text-slate-600">Tick the covers the insurance company should quote. Towing charges, WCI, GT, TPD, and H/P need a value. PAB and LL also need a multiplication.</p>
         {fieldErrors['covers.basic'] ? <p className="mt-2 text-sm text-red-700">{fieldErrors['covers.basic']}</p> : null}
         <div className="mt-4 grid gap-3">
           {tickOnly.map((cover) => (
@@ -312,12 +346,94 @@ export function MotorQuotationSlipFormPage() {
               </div>
             );
           })}
+          {tickTimes.map((cover) => {
+            const current = draft.covers[cover.key];
+            const valueError = fieldErrors[`covers.${cover.key}.value`];
+            const multipleError = fieldErrors[`covers.${cover.key}.multiple`];
+            return (
+              <div key={cover.key} className="grid items-start gap-3 sm:grid-cols-[12rem_1fr_auto_8rem]">
+                <label className="flex items-center gap-3 pt-2 text-sm font-medium text-navy-900">
+                  <input
+                    type="checkbox"
+                    checked={current.selected}
+                    onChange={(event) => update({ covers: { ...draft.covers, [cover.key]: { selected: event.target.checked, value: event.target.checked ? current.value : '', multiple: event.target.checked ? current.multiple : '' } } })}
+                  />
+                  {cover.label}
+                </label>
+                <label className="text-sm font-medium text-navy-900">
+                  <span className="sr-only">{cover.label} value</span>
+                  <input
+                    className="field"
+                    value={current.value}
+                    disabled={!current.selected}
+                    placeholder={current.selected ? 'Value' : ''}
+                    aria-invalid={valueError ? true : undefined}
+                    onChange={(event) => update({ covers: { ...draft.covers, [cover.key]: { ...current, value: event.target.value } } })}
+                  />
+                  {valueError ? <span className="mt-1 block text-sm text-red-700">{valueError}</span> : null}
+                </label>
+                <span className="pt-2 text-lg font-semibold text-navy-900" aria-hidden>×</span>
+                <label className="text-sm font-medium text-navy-900">
+                  <span className="sr-only">{cover.label} multiplication</span>
+                  <input
+                    className="field"
+                    value={current.multiple}
+                    disabled={!current.selected}
+                    placeholder={current.selected ? '×' : ''}
+                    aria-invalid={multipleError ? true : undefined}
+                    onChange={(event) => update({ covers: { ...draft.covers, [cover.key]: { ...current, multiple: event.target.value } } })}
+                  />
+                  {multipleError ? <span className="mt-1 block text-sm text-red-700">{multipleError}</span> : null}
+                </label>
+              </div>
+            );
+          })}
+          {tickValueAfter.map((cover) => {
+            const current = draft.covers[cover.key];
+            const valueError = fieldErrors[`covers.${cover.key}.value`];
+            return (
+              <div key={cover.key} className="grid items-center gap-3 sm:grid-cols-[12rem_1fr]">
+                <label className="flex items-center gap-3 text-sm font-medium text-navy-900">
+                  <input
+                    type="checkbox"
+                    checked={current.selected}
+                    onChange={(event) => update({ covers: { ...draft.covers, [cover.key]: { selected: event.target.checked, value: event.target.checked ? current.value : '' } } })}
+                  />
+                  {cover.label}
+                </label>
+                <label className="text-sm font-medium text-navy-900">
+                  <span className="sr-only">{cover.label} value</span>
+                  <input
+                    className="field"
+                    value={current.value}
+                    disabled={!current.selected}
+                    placeholder={current.selected ? 'Value' : ''}
+                    aria-invalid={valueError ? true : undefined}
+                    onChange={(event) => update({ covers: { ...draft.covers, [cover.key]: { ...current, value: event.target.value } } })}
+                  />
+                  {valueError ? <span className="mt-1 block text-sm text-red-700">{valueError}</span> : null}
+                </label>
+              </div>
+            );
+          })}
         </div>
       </fieldset>
       <button type="submit" className="rounded-full bg-gold px-5 py-2 text-sm font-semibold text-navy-950 disabled:opacity-60" disabled={pending}>
         {pending ? 'Saving…' : 'Save and download PDF'}
       </button>
     </form>
+  );
+}
+
+function SelectField({ label, value, options, onChange, error }: { label: string; value: string; options: string[]; onChange: (value: string) => void; error?: string }) {
+  return (
+    <label className="text-sm font-medium text-navy-900">{label}
+      <select className="field mt-1.5" value={value} aria-invalid={error ? true : undefined} onChange={(event) => onChange(event.target.value)}>
+        <option value="">Select</option>
+        {options.map((option) => <option key={option} value={option}>{option}</option>)}
+      </select>
+      {error ? <span className="mt-1 block text-sm text-red-700">{error}</span> : null}
+    </label>
   );
 }
 
