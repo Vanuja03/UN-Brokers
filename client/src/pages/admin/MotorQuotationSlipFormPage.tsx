@@ -60,7 +60,6 @@ const tickTimes = [
 
 const tickValueAfter = [
   { key: 'tpd', label: 'TPD' },
-  { key: 'hp', label: 'H/P' },
 ] as const;
 
 const vehicleTypes = [
@@ -258,6 +257,7 @@ export function MotorQuotationSlipFormPage() {
     }
     const any = tickOnly.some((cover) => values.covers[cover.key])
       || values.covers.wci.selected
+      || values.covers.hp.selected
       || [...tickValue, ...tickValueMid, ...tickValueAfter].some((cover) => values.covers[cover.key].selected)
       || tickTimes.some((cover) => values.covers[cover.key].selected);
     if (!any) errors['covers.basic'] = 'Tick at least one cover.';
@@ -322,7 +322,7 @@ export function MotorQuotationSlipFormPage() {
       </section>
       <fieldset className="rounded-2xl border border-slate-200 bg-white p-5">
         <legend className="px-1 text-lg font-bold">Covers</legend>
-        <p className="mt-1 text-sm text-slate-600">Tick the covers the insurance company should quote. WCI is Driver or Cleaner. Towing charges, GT, special windscreen cover, TPD, and H/P need a value. PAB and LL also need a multiplication.</p>
+        <p className="mt-1 text-sm text-slate-600">Tick the covers the insurance company should quote. WCI is Driver or Cleaner. Towing charges, GT, special windscreen cover, and TPD need a value. PAB and LL also need a multiplication. H/P is a tick only.</p>
         {fieldErrors['covers.basic'] ? <p className="mt-2 text-sm text-red-700">{fieldErrors['covers.basic']}</p> : null}
         <div className="mt-4 grid gap-3">
           {tickOnly.map((cover) => (
@@ -485,6 +485,14 @@ export function MotorQuotationSlipFormPage() {
               </div>
             );
           })}
+          <label className="flex items-center gap-3 text-sm font-medium text-navy-900">
+            <input
+              type="checkbox"
+              checked={draft.covers.hp.selected}
+              onChange={(event) => update({ covers: { ...draft.covers, hp: { selected: event.target.checked, value: '' } } })}
+            />
+            H/P
+          </label>
         </div>
       </fieldset>
       <button type="submit" className="rounded-full bg-gold px-5 py-2 text-sm font-semibold text-navy-950 disabled:opacity-60" disabled={pending}>

@@ -1,7 +1,6 @@
 export const motorBenefitRows = [
   ['totalPremium', 'Total premium with taxes'],
   ['fireTheftAccident', 'Fire / theft / accidental damage'],
-  ['maliciousAct', 'Malicious act'],
   ['floodNaturalPerils', 'Flood and natural perils'],
   ['airBagCover', 'Air bag cover'],
   ['thirdPartyInjury', 'Third party bodily injury'],

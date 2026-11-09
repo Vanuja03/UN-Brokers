@@ -13,7 +13,7 @@ const coverMultiple = coverValue.extend({
 const vehicleTypes = ['Car', 'Motorcycle', 'Three-wheeler', 'Van', 'Lorry', 'Bus', 'Prime mover', 'Other'] as const;
 const vehicleUsages = ['Private', 'Hiring', 'Rent a car'] as const;
 const wciRoles = ['Driver', 'Cleaner'] as const;
-const valuedKeys = ['towing', 'gt', 'windscreen', 'tpd', 'hp'] as const;
+const valuedKeys = ['towing', 'gt', 'windscreen', 'tpd'] as const;
 const multipliedKeys = ['pab', 'll'] as const;
 
 export const motorQuotationSlipSchema = z
@@ -65,7 +65,7 @@ export const motorQuotationSlipSchema = z
           if (!covers[key].value.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a value for this cover.', path: [key, 'value'] });
           if (!covers[key].multiple.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter the multiplication.', path: [key, 'multiple'] });
         }
-        const selected = covers.basic || covers.srcc || covers.tc || covers.flood || covers.wci.selected || valuedKeys.some((key) => covers[key].selected) || multipliedKeys.some((key) => covers[key].selected);
+        const selected = covers.basic || covers.srcc || covers.tc || covers.flood || covers.wci.selected || covers.hp.selected || valuedKeys.some((key) => covers[key].selected) || multipliedKeys.some((key) => covers[key].selected);
         if (!selected) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tick at least one cover.', path: ['basic'] });
       })
       .transform((covers) => ({
@@ -88,7 +88,7 @@ export const motorQuotationSlipSchema = z
           multiple: covers.ll.selected ? covers.ll.multiple.trim() : '',
         },
         tpd: { selected: covers.tpd.selected, value: covers.tpd.selected ? covers.tpd.value.trim() : '' },
-        hp: { selected: covers.hp.selected, value: covers.hp.selected ? covers.hp.value.trim() : '' },
+        hp: { selected: covers.hp.selected, value: '' },
       })),
     inquiryId: z.string().optional().default(''),
     motorQuotationId: z.string().optional().default(''),

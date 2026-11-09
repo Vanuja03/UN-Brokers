@@ -55,7 +55,7 @@ const coverRows: { label: string; selected: (input: QuotationSlipPdfInput) => bo
   { label: 'PAB', selected: (input) => input.covers.pab.selected, value: (input) => multiplied(input.covers.pab) },
   { label: 'LL', selected: (input) => input.covers.ll.selected, value: (input) => multiplied(input.covers.ll) },
   { label: 'TPD', selected: (input) => input.covers.tpd.selected, value: (input) => input.covers.tpd.value },
-  { label: 'H/P', selected: (input) => input.covers.hp.selected, value: (input) => input.covers.hp.value },
+  { label: 'H/P', selected: (input) => input.covers.hp.selected, value: () => '' },
 ];
 
 function assetPath(...parts: string[]) {

@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { blankQuotation, isExtraClaim, isYesNoBenefit, resizeInsurers, rowsFor, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
+import { blankQuotation, isExtraClaim, isPremiumTaxRow, isYesNoBenefit, resizeInsurers, rowsFor, visibleQuotationRows, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
 import { api, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { downloadPdf } from './MotorQuotationsPage';
@@ -53,7 +53,8 @@ export function MotorQuotationFormPage() {
     async function load() {
       if (id) {
         const response = await api.get(`/motor-quotations/${id}`);
-        if (!cancelled) setDraft(response.data.data);
+        const saved = response.data.data as MotorQuotationDraft;
+        if (!cancelled) setDraft({ ...saved, rows: visibleQuotationRows(saved.rows) });
         return;
       }
       const next = blankQuotation('motor', admin?.name || '');
@@ -290,7 +291,7 @@ export function MotorQuotationFormPage() {
           </thead>
           <tbody>
             {draft.rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-navy-50' : 'bg-white'}>
+              <tr key={rowIndex} className={isPremiumTaxRow(row.label) ? 'bg-[#FFB900]' : rowIndex % 2 === 0 ? 'bg-navy-50' : 'bg-white'}>
                 <th className="px-3 py-2 text-left font-semibold text-navy-900">
                   {isExtraClaim(draft.insuranceType, rowIndex) ? (
                     <div className="flex min-w-48 items-center gap-2">
@@ -329,7 +330,7 @@ export function MotorQuotationFormPage() {
                       </select>
                     ) : (
                       <input
-                        className="field"
+                        className={`field ${isPremiumTaxRow(row.label) ? '!border-[#E5A600] !bg-[#FFB900] font-semibold' : ''}`}
                         aria-label={`${row.label} for ${draft.insurers[valueIndex]}`}
                         value={value}
                         onChange={(event) => setCell(rowIndex, valueIndex, event.target.value)}

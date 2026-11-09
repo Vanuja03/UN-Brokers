@@ -174,7 +174,9 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
     };
     drawHeader();
 
-    input.rows.forEach((row, rowIndex) => {
+    const rows = input.rows.filter((row) => row.label.trim().toLowerCase() !== 'malicious act');
+    rows.forEach((row, rowIndex) => {
+      const premium = row.label.trim().toLowerCase() === 'total premium with taxes';
       doc.font('Helvetica').fontSize(8.5);
       const samples = [row.label, ...row.values];
       const textHeight = Math.max(
@@ -188,10 +190,11 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
         drawHeader();
       }
       if (rowIndex % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
+      if (premium) doc.rect(left + labelWidth, y, width - labelWidth, rowHeight).fill('#FFB900');
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
       doc.fillColor(navy).font('Helvetica-Bold').fontSize(8.5).text(row.label, left + 4, y + 5, { width: labelWidth - 8, height: rowHeight - 8, ellipsis: true });
       row.values.forEach((value, index) => {
-        doc.fillColor(ink).font('Helvetica').fontSize(8.5).text(cell(value), left + labelWidth + index * columnWidth + 4, y + 5, {
+        doc.fillColor(navy).font(premium ? 'Helvetica-Bold' : 'Helvetica').fontSize(8.5).text(cell(value), left + labelWidth + index * columnWidth + 4, y + 5, {
           width: columnWidth - 8,
           height: rowHeight - 8,
           ellipsis: true,

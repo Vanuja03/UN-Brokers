@@ -25,7 +25,6 @@ export type MotorQuotationDraft = {
 const comprehensiveRows = [
   'Total premium with taxes',
   'Fire / theft / accidental damage',
-  'Malicious act',
   'Flood and natural perils',
   'Air bag cover',
   'Third party bodily injury',
@@ -40,7 +39,6 @@ const comprehensiveRows = [
 
 export const yesNoBenefitLabels = [
   'Fire / theft / accidental damage',
-  'Malicious act',
   'Flood and natural perils',
   'Strike, riot and civil commotion',
   'Terrorism',
@@ -50,6 +48,14 @@ const yesNoBenefitSet = new Set<string>(yesNoBenefitLabels);
 
 export function isYesNoBenefit(label: string) {
   return yesNoBenefitSet.has(label);
+}
+
+export function isPremiumTaxRow(label: string) {
+  return label.trim().toLowerCase() === 'total premium with taxes';
+}
+
+export function visibleQuotationRows<T extends { label: string }>(rows: T[]) {
+  return rows.filter((row) => row.label.trim().toLowerCase() !== 'malicious act');
 }
 
 const thirdPartyRows = [
