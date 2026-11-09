@@ -33,7 +33,9 @@ export async function loginAs(app: Express, role: 'admin' | 'staff', email?: str
 }
 
 export const motorQuote = {
+  customerType: 'private',
   customerName: 'Test Customer',
+  nic: '123456789V',
   phone: '0771234567',
   email: 'customer@example.com',
   preferredContactMethod: 'email',

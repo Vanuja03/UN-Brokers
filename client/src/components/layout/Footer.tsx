@@ -6,6 +6,7 @@ import { useSettings } from '../../context/SettingsContext';
 import { whatsappHref } from '../../services/api';
 import { Container } from '../common/Container';
 import { Logo } from '../common/Logo';
+import { ProductCredit } from '../common/ProductCredit';
 
 export function Footer() {
   const { settings } = useSettings();
@@ -70,8 +71,9 @@ export function Footer() {
         </div>
       </Container>
       <div className="border-t border-white/10">
-        <Container className="flex flex-col gap-3 py-5 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+        <Container className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-5 text-sm text-slate-400">
           <p>© {new Date().getFullYear()} {settings.companyName}. All rights reserved.</p>
+          <ProductCredit className="text-slate-400 hover:text-gold" />
           <p className="flex gap-4"><Link to="/privacy-policy">Privacy policy</Link><Link to="/terms">Terms and conditions</Link></p>
         </Container>
       </div>

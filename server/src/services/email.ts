@@ -37,6 +37,10 @@ async function deliver(to: string, message: { subject: string; text: string; htm
 export async function sendQuoteEmails(input: {
   referenceNumber: string;
   customerName: string;
+  customerType?: string;
+  nic?: string;
+  customerCompany?: string;
+  designation?: string;
   email: string;
   phone: string;
   preferredContactMethod: string;
@@ -57,6 +61,10 @@ export async function sendQuoteEmails(input: {
           companyName: input.companyName,
           referenceNumber: input.referenceNumber,
           customerName: input.customerName,
+          customerType: input.customerType,
+          nic: input.nic,
+          customerCompany: input.customerCompany,
+          designation: input.designation,
           email: input.email,
           phone: input.phone,
           preferredContactMethod: input.preferredContactMethod,

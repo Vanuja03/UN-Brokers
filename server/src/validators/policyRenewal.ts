@@ -74,6 +74,5 @@ const thisYearPremium = z.preprocess((value) => {
 export const policyRenewalUpdateSchema = z.object({
   thisYearPremium,
   renewalResult: z.enum(['', 'done', 'cancel', 'sold'], { errorMap: () => ({ message: 'Choose done, cancel, or sold.' }) }).default(''),
-  commissionReceived: z.boolean().optional().default(false),
   remarks: optionalText(1000),
 });

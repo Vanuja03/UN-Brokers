@@ -1,9 +1,11 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Check, Tag, X } from 'lucide-react';
 import { api, getErrorMessage, getFieldErrors } from '../../services/api';
+import { NonMotorPolicyRegisterSection } from './NonMotorPolicyRegisterSection';
+import { NonMotorPolicyRenewalSection } from './NonMotorPolicyRenewalSection';
 import { PolicyRegisterSection } from './PolicyRegisterSection';
 
-type Status = 'ren' | 'new';
+type Status = 'ren' | 'new' | 'refund' | 'additional';
 type RenewalResult = '' | 'done' | 'cancel' | 'sold';
 
 type Policy = {
@@ -73,7 +75,7 @@ const blank: FormState = {
   remarks: '',
 };
 
-const statusLabel: Record<Status, string> = { ren: 'Ren', new: 'New' };
+const statusLabel: Record<Status, string> = { ren: 'Ren', new: 'New', refund: 'Refund', additional: 'Additional' };
 
 const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
 
@@ -109,7 +111,7 @@ function validatePolicy(values: FormState) {
   if (values.fromDate && values.toDate && values.toDate < values.fromDate) {
     errors.toDate = 'The to date must be on or after the from date.';
   }
-  if (values.status && values.status !== 'ren' && values.status !== 'new') errors.status = 'Choose Ren or New.';
+  if (values.status && !statusLabel[values.status]) errors.status = 'Choose a policy status.';
   if (values.renewalResult && !['done', 'cancel', 'sold'].includes(values.renewalResult)) errors.renewalResult = 'Choose done, cancel, or sold.';
   for (const key of amountFields) {
     if (errors[key]) continue;
@@ -159,12 +161,12 @@ export function PolicyRenewalsPage() {
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [saving, setSaving] = useState(false);
   const [tab, setTab] = useState<'register' | 'renewal'>('register');
+  const [book, setBook] = useState<'motor' | 'non-motor'>('motor');
 
   function renewalBody(values: FormState) {
     return {
       thisYearPremium: values.thisYearPremium,
       renewalResult: values.renewalResult,
-      commissionReceived: values.commissionReceived,
       remarks: values.remarks,
     };
   }
@@ -245,17 +247,6 @@ export function PolicyRenewalsPage() {
     }
   }
 
-  async function markCommission(row: Policy, commissionReceived: boolean) {
-    setError('');
-    try {
-      await api.patch(`/policy-renewals/${row._id}`, { ...renewalBody(toForm(row)), commissionReceived });
-      if (viewing?._id === row._id) setViewing({ ...row, commissionReceived });
-      await load();
-    } catch (markError) {
-      setError(getErrorMessage(markError, 'The commission status could not be saved.'));
-    }
-  }
-
   async function mark(row: Policy, renewalResult: Exclude<RenewalResult, ''>) {
     setError('');
     const next = row.renewalResult === renewalResult ? '' : renewalResult;
@@ -273,16 +264,22 @@ export function PolicyRenewalsPage() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="text-3xl font-bold">Policies</h1>
-          <p className="mt-2 max-w-2xl text-sm text-slate-600">The same registered policies appear in both views. Renewal uses the risk date, the renewal date, and the premium net.</p>
+          <p className="mt-2 max-w-2xl text-sm text-slate-600">Motor and non-motor policies are kept in separate registers. Each register has its own renewal list. Renewal uses the risk date, the renewal date, and last year premium from that register.</p>
         </div>
       </div>
       <div role="tablist" aria-label="Policy views" className="mt-5 flex flex-wrap gap-2">
         <button type="button" role="tab" aria-selected={tab === 'register'} className={`rounded-full px-4 py-2 text-sm font-semibold ${tab === 'register' ? 'bg-navy-900 text-white' : 'border border-slate-300 text-navy-900'}`} onClick={() => setTab('register')}>Policy register</button>
         <button type="button" role="tab" aria-selected={tab === 'renewal'} className={`rounded-full px-4 py-2 text-sm font-semibold ${tab === 'renewal' ? 'bg-navy-900 text-white' : 'border border-slate-300 text-navy-900'}`} onClick={() => setTab('renewal')}>Policy renewal</button>
       </div>
-      {error && tab === 'register' ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : null}
-      {tab === 'register' ? <PolicyRegisterSection /> : null}
-      {tab === 'renewal' ? (
+      <div role="tablist" aria-label="Policy book" className="mt-3 flex flex-wrap gap-2">
+        <button type="button" role="tab" aria-selected={book === 'motor'} className={`rounded-full px-4 py-2 text-sm font-semibold ${book === 'motor' ? 'bg-gold text-navy-950' : 'border border-slate-300 text-navy-900'}`} onClick={() => setBook('motor')}>Motor</button>
+        <button type="button" role="tab" aria-selected={book === 'non-motor'} className={`rounded-full px-4 py-2 text-sm font-semibold ${book === 'non-motor' ? 'bg-gold text-navy-950' : 'border border-slate-300 text-navy-900'}`} onClick={() => setBook('non-motor')}>Non-motor</button>
+      </div>
+      {error && tab === 'register' && book === 'motor' ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : null}
+      {tab === 'register' && book === 'motor' ? <PolicyRegisterSection /> : null}
+      {tab === 'register' && book === 'non-motor' ? <NonMotorPolicyRegisterSection /> : null}
+      {tab === 'renewal' && book === 'non-motor' ? <NonMotorPolicyRenewalSection /> : null}
+      {tab === 'renewal' && book === 'motor' ? (
       <>
       <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
         <div>
@@ -318,10 +315,12 @@ export function PolicyRenewalsPage() {
           <p className="sm:col-span-2 xl:col-span-3 text-sm text-slate-600">The register details stay as saved. Enter this year premium, then save it on this policy.</p>
           <Field name="policyNumber" label="Policy no" value={form.policyNumber} error={fieldErrors.policyNumber} onChange={(value) => update('policyNumber', value)} readOnly />
           <Field name="vehicleNumber" label="Vehicle no" value={form.vehicleNumber} error={fieldErrors.vehicleNumber} onChange={(value) => update('vehicleNumber', value)} readOnly />
-          <label className="text-sm font-medium text-navy-900">Sat
-            <select className="field mt-1.5 bg-slate-100 text-slate-600" value={form.status} aria-label="Sat" disabled>
+          <label className="text-sm font-medium text-navy-900">Policy status
+            <select className="field mt-1.5 bg-slate-100 text-slate-600" value={form.status} aria-label="Policy status" disabled>
               <option value="ren">Ren</option>
               <option value="new">New</option>
+              <option value="refund">Refund</option>
+              <option value="additional">Additional</option>
             </select>
           </label>
           <Field name="fromDate" label="From date (risk date)" type="date" value={form.fromDate} error={fieldErrors.fromDate} onChange={(value) => update('fromDate', value)} readOnly />
@@ -336,7 +335,7 @@ export function PolicyRenewalsPage() {
           <Field name="thisYearPremium" label="This year premium" value={form.thisYearPremium} error={fieldErrors.thisYearPremium} inputMode="decimal" onChange={(value) => update('thisYearPremium', value)} required />
           <Field name="insuranceCompany" label="Insurance company" value={form.insuranceCompany} error={fieldErrors.insuranceCompany} onChange={(value) => update('insuranceCompany', value)} readOnly />
           <Field name="salesPerson" label="Sales person" value={form.salesPerson} error={fieldErrors.salesPerson} onChange={(value) => update('salesPerson', value)} readOnly />
-          <Field name="speciCo" label="Agent code" value={form.speciCo} error={fieldErrors.speciCo} onChange={(value) => update('speciCo', value)} readOnly />
+          <Field name="speciCo" label="Broker code" value={form.speciCo} error={fieldErrors.speciCo} onChange={(value) => update('speciCo', value)} readOnly />
           <fieldset className="text-sm font-medium text-navy-900 sm:col-span-2 xl:col-span-3">
             <legend>Renewal</legend>
             <p className="mt-1 text-slate-600">After the one-year period, mark the policy. Click the same mark again to clear it. Remarks stay a written note.</p>
@@ -353,10 +352,6 @@ export function PolicyRenewalsPage() {
             </div>
             {fieldErrors.renewalResult ? <span className="mt-1 block text-sm text-red-700">{fieldErrors.renewalResult}</span> : null}
           </fieldset>
-          <label className="flex items-center gap-2 text-sm font-medium text-navy-900 sm:col-span-2 xl:col-span-3">
-            <input type="checkbox" checked={form.commissionReceived} onChange={(event) => update('commissionReceived', event.target.checked)} />
-            Commission received
-          </label>
           <label className="text-sm font-medium text-navy-900 sm:col-span-2 xl:col-span-3">Remarks
             <textarea className="field mt-1.5" rows={2} value={form.remarks} aria-invalid={fieldErrors.remarks ? true : undefined} onChange={(event) => update('remarks', event.target.value)} />
             {fieldErrors.remarks ? <span className="mt-1 block text-sm text-red-700">{fieldErrors.remarks}</span> : null}
@@ -376,7 +371,7 @@ export function PolicyRenewalsPage() {
           </div>
           <dl className="mt-3 grid gap-3 text-sm sm:grid-cols-2 xl:grid-cols-3">
             <Item label="Vehicle no" value={viewing.vehicleNumber} />
-            <Item label="Sat" value={statusLabel[viewing.status]} />
+            <Item label="Policy status" value={statusLabel[viewing.status]} />
             <Item label="From date (risk date)" value={day(viewing.fromDate)} />
             <Item label="To date (renewal date)" value={day(viewing.toDate)} />
             <Item label="Customer name" value={viewing.customerName} />
@@ -387,9 +382,8 @@ export function PolicyRenewalsPage() {
             <Item label="This year premium" value={money(viewing.thisYearPremium)} />
             <Item label="Insurance company" value={viewing.insuranceCompany || '—'} />
             <Item label="Sales person" value={viewing.salesPerson || '—'} />
-            <Item label="Agent code" value={viewing.speciCo || '—'} />
+            <Item label="Broker code" value={viewing.speciCo || '—'} />
             <div><dt className="font-medium text-navy-900">Renewal</dt><dd className="mt-1 text-slate-700"><ResultIcon value={viewing.renewalResult} labelled /></dd></div>
-            <Item label="Commission received" value={viewing.commissionReceived ? 'Received' : 'Not received'} />
             <Item label="Remarks" value={viewing.remarks || '—'} />
           </dl>
         </article>
@@ -399,14 +393,14 @@ export function PolicyRenewalsPage() {
         <table className="min-w-[88rem] w-full text-left text-sm">
           <thead className="bg-navy-900 text-white">
             <tr>
-              {['Policy no', 'Vehicle no', 'From (risk date)', 'To (renewal date)', 'Customer', 'Address', 'Sum insured', 'Last year premium', 'This year premium', 'Insurer', 'Sales person', 'Agent code', 'Sat', 'Contact', 'Renewal', 'Commission', 'Remarks', 'Actions'].map((heading) => (
+              {['Policy no', 'Vehicle no', 'From (risk date)', 'To (renewal date)', 'Customer', 'Address', 'Sum insured', 'Last year premium', 'This year premium', 'Insurer', 'Sales person', 'Broker code', 'Policy status', 'Contact', 'Renewal', 'Remarks', 'Actions'].map((heading) => (
                 <th key={heading} className="whitespace-nowrap px-3 py-2 font-semibold">{heading}</th>
               ))}
             </tr>
           </thead>
           <tbody>
             {rows.length === 0 ? (
-              <tr><td className="px-3 py-4 text-slate-600" colSpan={18}>{month || search || category || commission ? 'No policies match this filter.' : 'No registered policies yet.'}</td></tr>
+              <tr><td className="px-3 py-4 text-slate-600" colSpan={17}>{month || search || category || commission ? 'No policies match this filter.' : 'No registered policies yet.'}</td></tr>
             ) : rows.map((row) => (
               <tr key={row._id} className="border-t border-slate-200 align-top">
                 <td className="px-3 py-2 font-semibold">{row.policyNumber}</td>
@@ -434,12 +428,6 @@ export function PolicyRenewalsPage() {
                       );
                     })}
                   </div>
-                </td>
-                <td className="whitespace-nowrap px-3 py-2">
-                  <label className="inline-flex items-center gap-2">
-                    <input type="checkbox" checked={row.commissionReceived === true} aria-label={`Commission received for ${row.policyNumber}`} onChange={(event) => void markCommission(row, event.target.checked)} />
-                    {row.commissionReceived ? 'Received' : 'Not received'}
-                  </label>
                 </td>
                 <td className="max-w-48 px-3 py-2">{row.remarks}</td>
                 <td className="whitespace-nowrap px-3 py-2">

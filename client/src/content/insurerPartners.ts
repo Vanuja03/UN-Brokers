@@ -17,4 +17,5 @@ export const insurerPartners: InsurerLogo[] = [
   { name: 'Amana Takaful', logo: '/partners/takaful.png', website: 'https://www.takaful.lk/' },
   { name: 'Orient Insurance', logo: '/partners/orient.jpg', website: 'https://orientinsurance.lk/' },
   { name: 'MBSL Insurance', logo: '/partners/mbsl.png', website: 'https://www.mbslinsurance.lk/' },
+  { name: "People's Insurance", logo: '/partners/peoples-insurance.png', website: 'https://www.peoplesinsurance.lk/' },
 ];

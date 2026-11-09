@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Car, ClipboardList, FileText, LayoutDashboard, LogOut, Mail, PanelLeftClose, PanelLeftOpen, PenLine, Settings, Shield, type LucideIcon } from 'lucide-react';
+import { Car, ClipboardList, FileText, LayoutDashboard, LogOut, Mail, PanelLeftClose, PanelLeftOpen, PenLine, Settings, Shield, Users, type LucideIcon } from 'lucide-react';
 import { Logo } from '../common/Logo';
+import { ProductCredit } from '../common/ProductCredit';
 import { PageMotion } from '../common/PageMotion';
 import { api } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
@@ -21,6 +22,7 @@ const links: { to: string; label: string; icon: LucideIcon }[] = [
   { to: '/admin/policy-renewals', label: 'Policies', icon: Shield },
   { to: '/admin/contacts', label: 'Messages', icon: Mail },
   { to: '/admin/content', label: 'Content', icon: PenLine },
+  { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ];
 
@@ -60,7 +62,8 @@ export function AdminLayout() {
     navigate('/admin/login');
   }
 
-  const visibleLinks = links.filter((link) => admin?.role === 'admin' || (link.to !== '/admin/content' && link.to !== '/admin/settings'));
+  const adminOnly = new Set(['/admin/content', '/admin/users', '/admin/settings']);
+  const visibleLinks = links.filter((link) => admin?.role === 'admin' || !adminOnly.has(link.to));
   const labelClass = `min-w-0 overflow-hidden whitespace-nowrap transition-[max-width,opacity,margin] duration-300 ease-in-out motion-reduce:transition-none ${expanded ? 'ml-3 max-w-40 opacity-100' : 'ml-0 max-w-0 opacity-0'}`;
 
   return (
@@ -69,7 +72,7 @@ export function AdminLayout() {
       style={{ gridTemplateColumns: expanded ? '16rem minmax(0, 1fr)' : '4rem minmax(0, 1fr)' }}
     >
       <button type="button" className={`fixed inset-0 z-30 bg-navy-950/50 transition-opacity duration-300 ease-in-out motion-reduce:transition-none lg:hidden ${expanded ? 'opacity-100' : 'pointer-events-none opacity-0'}`} aria-label="Collapse menu" aria-hidden={!expanded} tabIndex={expanded ? 0 : -1} onClick={() => setSidebar(false)} />
-      <aside id="admin-sidebar" className={`fixed inset-y-0 left-0 z-40 w-64 overflow-x-hidden bg-navy-900 text-white shadow-xl transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:overflow-y-auto lg:shadow-none ${expanded ? 'translate-x-0 lg:w-64' : '-translate-x-full lg:w-16 lg:translate-x-0'}`}>
+      <aside id="admin-sidebar" className={`fixed inset-y-0 left-0 z-40 flex w-64 flex-col overflow-x-hidden bg-navy-900 text-white shadow-xl transition-[transform,width] duration-300 ease-in-out motion-reduce:transition-none lg:sticky lg:top-0 lg:z-auto lg:h-screen lg:shadow-none ${expanded ? 'translate-x-0 lg:w-64' : '-translate-x-full lg:w-16 lg:translate-x-0'}`}>
         <div className="flex items-center py-4">
           <div className="flex h-14 w-16 shrink-0 items-center justify-center">
             <Logo className="h-10 w-auto" />
@@ -79,7 +82,7 @@ export function AdminLayout() {
             <p className="mt-1 whitespace-nowrap text-xs text-slate-300">Staff workspace</p>
           </div>
         </div>
-        <nav className="space-y-1 pb-4" aria-label="Admin">
+        <nav className="min-h-0 flex-1 space-y-1 overflow-y-auto pb-4" aria-label="Admin">
           {visibleLinks.map((link) => {
             const Icon = link.icon;
             const active = navActive(link.to, pathname);
@@ -99,6 +102,7 @@ export function AdminLayout() {
             <span className={labelClass}>Sign out</span>
           </button>
         </nav>
+        {expanded ? <ProductCredit className="shrink-0 border-t border-white/10 px-3 py-4 text-slate-300 hover:text-gold" /> : null}
       </aside>
       <div className="min-w-0">
         <header className="flex flex-wrap items-center justify-between gap-3 border-b border-slate-200 bg-white px-4 py-4 sm:px-6">

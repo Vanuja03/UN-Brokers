@@ -4,7 +4,7 @@ import { campaignSchema, emailSchema, lkrAmount, optionalText, phoneSchema, posi
 
 const currentYear = new Date().getFullYear();
 
-const vehicleType = z.enum(['private-car', 'motorcycle', 'three-wheeler', 'van', 'lorry', 'bus', 'other']);
+const vehicleType = z.enum(['private-car', 'motorcycle', 'three-wheeler', 'van', 'lorry', 'bus', 'prime-mover', 'other']);
 const fuelType = z.enum(['petrol', 'diesel', 'electric', 'phev', 'hybrid', 'other']);
 const usage = z.enum(['private', 'hiring', 'rent-a-car', 'business', 'commercial-passenger', 'goods-transport', 'other']);
 const ownership = z.enum(['owned', 'financed', 'leased', 'other']);
@@ -52,10 +52,11 @@ const motorThirdPartyDetails = withRegistration({
 });
 
 const isoDate = z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date.');
+const nicSchema = z.string().trim().toUpperCase().refine((value) => /^\d{9}[VX]$/.test(value) || /^\d{12}$/.test(value), 'Enter a valid NIC number.');
 
 const travelDetails = z
   .object({
-    nicNo: z.string().trim().toUpperCase().refine((value) => /^\d{9}[VX]$/.test(value) || /^\d{12}$/.test(value), 'Enter a valid NIC number.'),
+    nicNo: nicSchema,
     destination: textField(2, 160),
     departureDate: isoDate,
     returnDate: isoDate,
@@ -157,7 +158,11 @@ export const detailSchemas = {
 
 export const quoteBodySchema = z
   .object({
+    customerType: z.enum(['private', 'company'], { errorMap: () => ({ message: 'Choose private or company.' }) }),
     customerName: textField(2, 120),
+    nic: nicSchema,
+    companyName: z.string().trim().max(160, 'Enter 160 characters or fewer.').optional().default(''),
+    designation: z.string().trim().max(80, 'Enter 80 characters or fewer.').optional().default(''),
     phone: phoneSchema,
     email: emailSchema,
     preferredContactMethod: z.enum(['phone', 'email', 'either']),
@@ -173,6 +178,10 @@ export const quoteBodySchema = z
     website: z.string().max(0).optional().default(''),
   })
   .superRefine((data, ctx) => {
+    if (data.customerType === 'company') {
+      if (data.companyName.trim().length < 2) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter the company name.', path: ['companyName'] });
+      if (data.designation.trim().length < 2) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter the designation.', path: ['designation'] });
+    }
     const schema = detailSchemas[data.insuranceType];
     const result = schema.safeParse(data.insuranceDetails);
     if (!result.success) {
@@ -187,7 +196,13 @@ export const quoteBodySchema = z
   .transform((data) => {
     const schema = detailSchemas[data.insuranceType];
     const details = schema.parse(data.insuranceDetails);
-    return { ...data, insuranceDetails: details, message: data.message ?? '' };
+    return {
+      ...data,
+      insuranceDetails: details,
+      message: data.message ?? '',
+      companyName: data.customerType === 'company' ? data.companyName.trim() : '',
+      designation: data.customerType === 'company' ? data.designation.trim() : '',
+    };
   });
 
 export type QuoteBody = z.infer<typeof quoteBodySchema>;

@@ -28,6 +28,7 @@ import { ContactsPage } from '../pages/admin/ContactsPage';
 import { PolicyRenewalsPage } from '../pages/admin/PolicyRenewalsPage';
 import { ContentPage } from '../pages/admin/ContentPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
+import { UsersPage } from '../pages/admin/UsersPage';
 import { services } from '../content/services';
 
 export function AppRoutes() {
@@ -68,6 +69,7 @@ export function AppRoutes() {
           <Route path="policy-renewals" element={<PolicyRenewalsPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="content" element={<ContentPage />} />
+          <Route path="users" element={<UsersPage />} />
           <Route path="settings" element={<SettingsPage />} />
         </Route>
       </Route>

@@ -35,6 +35,7 @@ const motorQuotationSlipSchema = new Schema(
       towing: { type: valuedCoverSchema, default: () => ({}) },
       wci: { type: valuedCoverSchema, default: () => ({}) },
       gt: { type: valuedCoverSchema, default: () => ({}) },
+      windscreen: { type: valuedCoverSchema, default: () => ({}) },
       pab: { type: multipliedCoverSchema, default: () => ({}) },
       ll: { type: multipliedCoverSchema, default: () => ({}) },
       tpd: { type: valuedCoverSchema, default: () => ({}) },

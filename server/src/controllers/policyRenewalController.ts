@@ -24,7 +24,7 @@ type RegisterRow = {
   insuranceCompany: string;
   salesPerson?: string;
   agentCode?: string;
-  special: 'ren' | 'new';
+  special: 'ren' | 'new' | 'refund' | 'additional';
   renewalResult?: '' | 'done' | 'cancel' | 'sold';
   commissionReceived?: boolean;
   telephone?: string;
@@ -141,7 +141,7 @@ export const downloadPolicyRenewals = asyncHandler(async (req, res) => {
         insuranceCompany: view.insuranceCompany,
         salesPerson: view.salesPerson,
         speciCo: view.speciCo,
-        status: view.status === 'new' ? 'New' : 'Ren',
+        status: view.status === 'new' ? 'New' : view.status === 'refund' ? 'Refund' : view.status === 'additional' ? 'Additional' : 'Ren',
         renewalResult: view.renewalResult === 'done' || view.renewalResult === 'cancel' || view.renewalResult === 'sold' ? view.renewalResult : '',
         contactNo: view.contactNo,
         remarks: view.remarks,
@@ -169,7 +169,6 @@ export const updatePolicyRenewal = asyncHandler(async (req, res) => {
   if (!existing) throw new AppError(404, 'Policy not found.');
   existing.thisYearPremium = req.body.thisYearPremium;
   existing.renewalResult = req.body.renewalResult;
-  existing.commissionReceived = req.body.commissionReceived;
   existing.remarks = req.body.remarks ?? '';
   await existing.save();
   await recordAudit(req, 'policy_renewal_update', 'policy-register', existing.id);

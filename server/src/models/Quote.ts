@@ -26,7 +26,11 @@ const historySchema = new Schema(
 const quoteSchema = new Schema(
   {
     referenceNumber: { type: String, required: true, unique: true, index: true },
+    customerType: { type: String, enum: ['private', 'company'], default: 'private' },
     customerName: { type: String, required: true, trim: true, maxlength: 120 },
+    nic: { type: String, default: '', trim: true, uppercase: true, maxlength: 12 },
+    companyName: { type: String, default: '', trim: true, maxlength: 160 },
+    designation: { type: String, default: '', trim: true, maxlength: 80 },
     email: { type: String, required: true, lowercase: true, trim: true, maxlength: 254, index: true },
     phone: { type: String, required: true, trim: true, maxlength: 20 },
     preferredContactMethod: { type: String, enum: ['phone', 'email', 'either'], required: true },

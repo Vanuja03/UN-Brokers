@@ -26,6 +26,26 @@ function percent(amount: number, rate: number) {
   return Math.round((Math.round(amount * 100) * rate) / 100) / 100;
 }
 
+const rate = z.preprocess((value) => {
+  if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+  if (typeof value !== 'string') return '';
+  return value.trim();
+}, z.string().superRefine((value, ctx) => {
+  if (!value) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a rate.' });
+    return;
+  }
+  if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid rate.' });
+    return;
+  }
+  if (Number(value) > 100) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a rate up to 100.' });
+}).transform((value) => Number(value)));
+
+const optionalDay = z.string().trim().superRefine((value, ctx) => {
+  if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid date.' });
+});
+
 export const policyRegisterSchema = z.object({
   entryDate: day,
   riskDate: day,
@@ -40,10 +60,16 @@ export const policyRegisterSchema = z.object({
   premiumRcc: money(false),
   premiumTc: money(false),
   premiumIncludingTax: money(true),
+  netCommissionRate: rate,
+  rccCommissionRate: rate,
+  tcCommissionRate: rate,
   insuranceCompany: textField(1, 160),
   salesPerson: optionalText(120),
   agentCode: optionalText(80),
-  special: z.enum(['ren', 'new'], { errorMap: () => ({ message: 'Choose Ren or New.' }) }),
+  special: z.enum(['ren', 'new', 'refund', 'additional'], { errorMap: () => ({ message: 'Choose a policy status.' }) }),
+  commissionReceived: z.boolean().optional().default(false),
+  commissionReference: optionalText(40),
+  commissionReceivedDate: optionalDay,
   telephone: z.string().trim().superRefine((value, ctx) => {
     if (!value) return;
     if (!/^\+?[0-9]{9,15}$/.test(value.replace(/[\s()-]/g, ''))) {
@@ -51,15 +77,22 @@ export const policyRegisterSchema = z.object({
     }
   }).transform((value) => value.replace(/[\s()-]/g, '')),
   unSalesPerson: optionalText(120),
+}).superRefine((value, ctx) => {
+  if (!value.commissionReceived) return;
+  if (!value.commissionReference?.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter the BR or NIC.', path: ['commissionReference'] });
+  if (!value.commissionReceivedDate) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter the received date.', path: ['commissionReceivedDate'] });
 }).transform((value) => ({
   ...value,
   debitNoteNo: value.debitNoteNo ?? '',
   salesPerson: value.salesPerson ?? '',
   agentCode: value.agentCode ?? '',
   unSalesPerson: value.unSalesPerson ?? '',
-  basicCommission: percent(value.premiumNet, 13),
-  rccCommission: percent(value.premiumRcc, 5),
-  tcCommission: percent(value.premiumTc, 5),
+  commissionReceived: value.commissionReceived === true,
+  commissionReference: value.commissionReceived ? (value.commissionReference ?? '').trim() : '',
+  commissionReceivedDate: value.commissionReceived ? value.commissionReceivedDate : null,
+  basicCommission: percent(value.premiumNet, value.netCommissionRate),
+  rccCommission: percent(value.premiumRcc, value.rccCommissionRate),
+  tcCommission: percent(value.premiumTc, value.tcCommissionRate),
 }));
 
 export type PolicyRegisterBody = z.infer<typeof policyRegisterSchema>;

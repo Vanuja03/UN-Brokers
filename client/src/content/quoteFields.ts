@@ -19,12 +19,13 @@ export type QuoteField = {
 };
 
 const vehicleTypes = [
-  { value: 'private-car', label: 'Private car' },
+  { value: 'private-car', label: 'Car' },
   { value: 'motorcycle', label: 'Motorcycle' },
   { value: 'three-wheeler', label: 'Three-wheeler' },
   { value: 'van', label: 'Van' },
   { value: 'lorry', label: 'Lorry' },
   { value: 'bus', label: 'Bus' },
+  { value: 'prime-mover', label: 'Prime mover' },
   { value: 'other', label: 'Other' },
 ];
 

@@ -50,6 +50,8 @@ function quoteFilter(query: Record<string, unknown>): FilterQuery<typeof Quote> 
     const term = escapeRegex(query.search.trim().slice(0, 100));
     filter.$or = [
       { customerName: { $regex: term, $options: 'i' } },
+      { companyName: { $regex: term, $options: 'i' } },
+      { nic: { $regex: term, $options: 'i' } },
       { email: { $regex: term, $options: 'i' } },
       { phone: { $regex: term, $options: 'i' } },
       { referenceNumber: { $regex: term, $options: 'i' } },
@@ -91,7 +93,11 @@ export const createQuote = asyncHandler(async (req, res) => {
   const referenceNumber = await uniqueReference();
   const quote = await Quote.create({
     referenceNumber,
+    customerType: parsed.customerType,
     customerName: parsed.customerName,
+    nic: parsed.nic,
+    companyName: parsed.companyName,
+    designation: parsed.designation,
     email: parsed.email,
     phone: parsed.phone,
     preferredContactMethod: parsed.preferredContactMethod,
@@ -117,6 +123,10 @@ export const createQuote = asyncHandler(async (req, res) => {
     const emailResult = await sendQuoteEmails({
       referenceNumber: quote.referenceNumber,
       customerName: quote.customerName,
+      customerType: quote.customerType,
+      nic: quote.nic,
+      customerCompany: quote.companyName,
+      designation: quote.designation,
       email: quote.email,
       phone: quote.phone,
       preferredContactMethod: quote.preferredContactMethod,
@@ -235,11 +245,15 @@ export const exportQuotes = asyncHandler(async (req, res) => {
   const filter = quoteFilter(req.query as Record<string, unknown>);
   const quotes = await Quote.find(filter).populate('assignedTo', 'name').sort('-createdAt').limit(5000);
   const csv = toCsv(
-    ['Reference', 'Created', 'Name', 'Email', 'Phone', 'Insurance', 'Status', 'Assigned', 'Source page'],
+    ['Reference', 'Created', 'Name', 'NIC', 'Registered as', 'Company', 'Designation', 'Email', 'Phone', 'Insurance', 'Status', 'Assigned', 'Source page'],
     quotes.map((quote) => [
       quote.referenceNumber,
       quote.createdAt?.toISOString() ?? '',
       quote.customerName,
+      quote.nic ?? '',
+      quote.customerType === 'company' ? 'Company' : 'Private',
+      quote.companyName ?? '',
+      quote.designation ?? '',
       quote.email,
       quote.phone,
       quote.insuranceType,

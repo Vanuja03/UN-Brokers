@@ -66,6 +66,17 @@ import {
   listPolicyRenewals,
   updatePolicyRenewal,
 } from '../controllers/policyRenewalController.js';
+import {
+  createNonMotorPolicyRegister,
+  createNonMotorPolicyRenewal,
+  deleteNonMotorPolicyRegister,
+  deleteNonMotorPolicyRenewal,
+  downloadNonMotorPolicyRenewals,
+  listNonMotorPolicyRegisters,
+  listNonMotorPolicyRenewals,
+  updateNonMotorPolicyRegister,
+  updateNonMotorPolicyRenewal,
+} from '../controllers/nonMotorPolicyController.js';
 import { adminSettings, createStaff, listAudit, listStaff, publicSettings, updateSettings, updateStaff } from '../controllers/settingsController.js';
 import { requireAuth, requireRole } from '../middleware/auth.js';
 import { requireCsrf } from '../middleware/csrf.js';
@@ -73,6 +84,7 @@ import { authLimiter, inquiryLimiter } from '../middleware/rateLimits.js';
 import { validateBody } from '../middleware/validate.js';
 import { faqSchema, insuranceContentSchema, partnerSchema, settingsSchema, teamSchema, testimonialSchema } from '../validators/content.js';
 import { motorQuotationSlipSchema } from '../validators/motorQuotationSlip.js';
+import { nonMotorPolicyRegisterSchema } from '../validators/nonMotorPolicyRegister.js';
 import { policyRegisterSchema } from '../validators/policyRegister.js';
 import { policyRenewalUpdateSchema } from '../validators/policyRenewal.js';
 
@@ -107,6 +119,17 @@ router.get('/policy-registers', requireAuth, listPolicyRegisters);
 router.post('/policy-registers', ...staff, validateBody(policyRegisterSchema), createPolicyRegister);
 router.patch('/policy-registers/:id', ...staff, validateBody(policyRegisterSchema), updatePolicyRegister);
 router.delete('/policy-registers/:id', ...staff, deletePolicyRegister);
+
+router.get('/non-motor-policy-registers', requireAuth, listNonMotorPolicyRegisters);
+router.post('/non-motor-policy-registers', ...staff, validateBody(nonMotorPolicyRegisterSchema), createNonMotorPolicyRegister);
+router.patch('/non-motor-policy-registers/:id', ...staff, validateBody(nonMotorPolicyRegisterSchema), updateNonMotorPolicyRegister);
+router.delete('/non-motor-policy-registers/:id', ...staff, deleteNonMotorPolicyRegister);
+
+router.get('/non-motor-policy-renewals', requireAuth, listNonMotorPolicyRenewals);
+router.get('/non-motor-policy-renewals/pdf', requireAuth, downloadNonMotorPolicyRenewals);
+router.post('/non-motor-policy-renewals', ...staff, createNonMotorPolicyRenewal);
+router.patch('/non-motor-policy-renewals/:id', ...staff, validateBody(policyRenewalUpdateSchema), updateNonMotorPolicyRenewal);
+router.delete('/non-motor-policy-renewals/:id', ...staff, deleteNonMotorPolicyRenewal);
 
 router.get('/policy-renewals', requireAuth, listPolicyRenewals);
 router.get('/policy-renewals/pdf', requireAuth, downloadPolicyRenewals);

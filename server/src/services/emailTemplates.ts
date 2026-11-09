@@ -61,6 +61,16 @@ const LABELS: Record<string, string> = {
   applicantRole: 'Applicant role',
 };
 
+const valueLabels: Record<string, string> = {
+  'private-car': 'Car',
+  'prime-mover': 'Prime mover',
+  motorcycle: 'Motorcycle',
+  'three-wheeler': 'Three-wheeler',
+  van: 'Van',
+  lorry: 'Lorry',
+  bus: 'Bus',
+};
+
 export function detailLines(details: Record<string, unknown>, currency: string) {
   return Object.entries(details)
     .filter(([, value]) => value !== undefined && value !== '' && value !== null && !(Array.isArray(value) && value.length === 0))
@@ -84,7 +94,7 @@ export function detailLines(details: Record<string, unknown>, currency: string) 
           }
           return String(entry);
         }).join('; ')
-        : String(value);
+        : valueLabels[String(value)] ?? String(value);
       const text = moneyKeys.includes(key) ? `${currency} ${rendered}` : rendered;
       return { label, text };
     });
@@ -132,6 +142,10 @@ export function adminQuoteEmail(input: {
   companyName: string;
   referenceNumber: string;
   customerName: string;
+  customerType?: string;
+  nic?: string;
+  customerCompany?: string;
+  designation?: string;
   email: string;
   phone: string;
   preferredContactMethod: string;
@@ -148,11 +162,11 @@ export function adminQuoteEmail(input: {
   const body = `
     <p>A new quotation inquiry has been saved.</p>
     <p><strong>${escapeHtml(input.referenceNumber)}</strong> · ${escapeHtml(INSURANCE_LABELS[input.insuranceType])}</p>
-    <p>${escapeHtml(input.customerName)}<br>${escapeHtml(input.email)}<br>${escapeHtml(input.phone)}<br>Preferred contact: ${escapeHtml(input.preferredContactMethod)}</p>
+    <p>${escapeHtml(input.customerName)}${input.customerType === 'company' ? `<br>Company: ${escapeHtml(input.customerCompany || '')}<br>Designation: ${escapeHtml(input.designation || '')}` : '<br>Private'}<br>NIC: ${escapeHtml(input.nic || '')}<br>${escapeHtml(input.email)}<br>${escapeHtml(input.phone)}<br>Preferred contact: ${escapeHtml(input.preferredContactMethod)}</p>
     <table style="width:100%;border-collapse:collapse;">${rows}</table>
     ${input.message ? `<p><strong>Message</strong><br>${escapeHtml(input.message)}</p>` : ''}
     ${link}`;
-  const text = `New inquiry ${input.referenceNumber}\n${input.customerName} ${input.email} ${input.phone}\n${INSURANCE_LABELS[input.insuranceType]}`;
+  const text = `New inquiry ${input.referenceNumber}\n${input.customerName} ${input.customerType === 'company' ? `Company: ${input.customerCompany || ''} Designation: ${input.designation || ''}` : 'Private'} NIC: ${input.nic || ''} ${input.email} ${input.phone}\n${INSURANCE_LABELS[input.insuranceType]}`;
   return {
     subject: `New inquiry ${input.referenceNumber}`,
     text,

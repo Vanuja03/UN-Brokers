@@ -30,6 +30,7 @@ export type QuotationSlipPdfInput = {
     towing: ValuedCover;
     wci: ValuedCover;
     gt: ValuedCover;
+    windscreen: ValuedCover;
     pab: MultipliedCover;
     ll: MultipliedCover;
     tpd: ValuedCover;
@@ -48,8 +49,9 @@ const coverRows: { label: string; selected: (input: QuotationSlipPdfInput) => bo
   { label: 'TC', selected: (input) => input.covers.tc, value: () => '' },
   { label: 'Flood', selected: (input) => input.covers.flood, value: () => '' },
   { label: 'Towing charges', selected: (input) => input.covers.towing.selected, value: (input) => input.covers.towing.value },
-  { label: 'WCI', selected: (input) => input.covers.wci.selected, value: (input) => input.covers.wci.value },
+  { label: 'WCI', selected: (input) => input.covers.wci?.selected === true, value: (input) => input.covers.wci?.value || '' },
   { label: 'GT', selected: (input) => input.covers.gt.selected, value: (input) => input.covers.gt.value },
+  { label: 'Special windscreen cover', selected: (input) => input.covers.windscreen?.selected === true, value: (input) => input.covers.windscreen?.value || '' },
   { label: 'PAB', selected: (input) => input.covers.pab.selected, value: (input) => multiplied(input.covers.pab) },
   { label: 'LL', selected: (input) => input.covers.ll.selected, value: (input) => multiplied(input.covers.ll) },
   { label: 'TPD', selected: (input) => input.covers.tpd.selected, value: (input) => input.covers.tpd.value },
@@ -179,13 +181,13 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
 
     coverRows.forEach((row, index) => {
       const selected = row.selected(input);
-      const rowHeight = 30;
+      const rowHeight = 27;
       if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
-      tick(doc, left + 8, y + 8, selected);
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text(row.label, left + 32, y + 8, { width: 180 });
-      doc.fillColor(selected ? ink : '#94a3b8').font('Helvetica').fontSize(12).text(selected ? row.value(input) || 'Yes' : '—', left + 220, y + 8, {
-        width: width - 230,
+      tick(doc, left + 8, y + 6, selected);
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(11).text(row.label, left + 32, y + 7, { width: 188, height: 14, ellipsis: true });
+      doc.fillColor(selected ? ink : '#94a3b8').font('Helvetica').fontSize(11).text(selected ? row.value(input) || 'Yes' : '—', left + 228, y + 7, {
+        width: width - 240,
         ellipsis: true,
       });
       y += rowHeight;

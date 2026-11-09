@@ -11,6 +11,12 @@ export const phoneSchema = z
 
 export const emailSchema = z.string().trim().email('Enter a valid email address.').max(254);
 
+export const nicSchema = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .refine((value) => /^\d{9}[VX]$/.test(value) || /^\d{12}$/.test(value), 'Enter a valid NIC number.');
+
 const textField = (min: number, max: number) => z.string().trim().min(min, 'This field is required.').max(max);
 const optionalText = (max: number) => z.string().trim().max(max).optional().or(z.literal(''));
 const optionalDate = z.string().trim().regex(/^\d{4}-\d{2}-\d{2}$/, 'Enter a valid date.').or(z.literal('')).optional();
@@ -47,7 +53,7 @@ const insuredLineSchema = z.object({
   }
 });
 const vehicleBase = {
-  vehicleType: z.enum(['private-car', 'motorcycle', 'three-wheeler', 'van', 'lorry', 'bus', 'other']),
+  vehicleType: z.enum(['private-car', 'motorcycle', 'three-wheeler', 'van', 'lorry', 'bus', 'prime-mover', 'other']),
   vehicleMake: textField(1, 80),
   vehicleModel: textField(1, 80),
   yearOfManufacture: z.coerce.number().int().min(1980, 'Enter a valid year.').max(currentYear + 1),
@@ -79,7 +85,7 @@ export const detailSchemas = {
   'motor-third-party': withRegistration({ ...vehicleBase, liabilityNotes: optionalText(1000) }),
   travel: z
     .object({
-      nicNo: z.string().trim().toUpperCase().refine((value) => /^\d{9}[VX]$/.test(value) || /^\d{12}$/.test(value), 'Enter a valid NIC number.'),
+      nicNo: nicSchema,
       destination: textField(2, 160),
       departureDate: isoDate,
       returnDate: isoDate,
@@ -121,21 +127,45 @@ export const detailSchemas = {
   'title-insurance': z.object({}),
 } satisfies Record<InsuranceType, z.ZodTypeAny>;
 
-export const contactSchema = z.object({
+const contactObject = z.object({
+  customerType: z.enum(['private', 'company'], { errorMap: () => ({ message: 'Choose private or company.' }) }),
   customerName: textField(2, 120),
+  nic: nicSchema,
+  companyName: z.string().trim().max(160, 'Enter 160 characters or fewer.').optional().or(z.literal('')),
+  designation: z.string().trim().max(80, 'Enter 80 characters or fewer.').optional().or(z.literal('')),
   phone: phoneSchema,
   email: emailSchema,
   preferredContactMethod: z.enum(['phone', 'email', 'either']),
   insuranceType: z.enum(INSURANCE_TYPES),
 });
 
+function checkCustomer(data: { customerType?: string; companyName?: string; designation?: string }, ctx: z.RefinementCtx) {
+  if (data.customerType !== 'company') return;
+  if (!data.companyName || data.companyName.trim().length < 2) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['companyName'], message: 'Enter the company name.' });
+  }
+  if (!data.designation || data.designation.trim().length < 2) {
+    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['designation'], message: 'Enter the designation.' });
+  }
+}
+
+export const contactSchema = contactObject.superRefine(checkCustomer);
+
 export function buildQuoteSchema(type: InsuranceType) {
-  return contactSchema.extend({
-    insuranceDetails: detailSchemas[type],
-    message: optionalText(2000),
-    consent: z.literal(true, { errorMap: () => ({ message: 'Consent to the privacy notice is required.' }) }),
-    website: z.string().max(0).optional().or(z.literal('')),
-  });
+  return contactObject
+    .extend({
+      insuranceDetails: detailSchemas[type],
+      message: optionalText(2000),
+      consent: z.literal(true, { errorMap: () => ({ message: 'Consent to the privacy notice is required.' }) }),
+      website: z.string().max(0).optional().or(z.literal('')),
+    })
+    .superRefine(checkCustomer)
+    .transform((data) => ({
+      ...data,
+      companyName: data.customerType === 'company' ? (data.companyName ?? '').trim() : '',
+      designation: data.customerType === 'company' ? (data.designation ?? '').trim() : '',
+      message: data.message ?? '',
+    }));
 }
 
 export const contactFormSchema = z.object({

@@ -9,6 +9,10 @@ type Quote = {
   _id: string;
   referenceNumber: string;
   customerName: string;
+  customerType?: 'private' | 'company';
+  nic?: string;
+  companyName?: string;
+  designation?: string;
   email: string;
   phone: string;
   preferredContactMethod: string;
@@ -28,7 +32,18 @@ type Quote = {
 
 const statuses = Object.keys(STATUS_LABELS).filter((status) => status !== 'in-progress' && status !== 'resolved');
 
+const valueLabels: Record<string, string> = {
+  'private-car': 'Car',
+  'prime-mover': 'Prime mover',
+  motorcycle: 'Motorcycle',
+  'three-wheeler': 'Three-wheeler',
+  van: 'Van',
+  lorry: 'Lorry',
+  bus: 'Bus',
+};
+
 function formatInquiryValue(value: unknown, currency: string) {
+  if (typeof value === 'string' && valueLabels[value]) return valueLabels[value];
   if (!Array.isArray(value)) return String(value);
   return value.map((entry) => {
     if (entry && typeof entry === 'object' && 'startLocation' in entry) {
@@ -129,7 +144,10 @@ export function QuotationDetailPage() {
       {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
       <section className="rounded-2xl border border-slate-200 bg-white p-5 text-sm">
         <h2 className="font-bold">Customer</h2>
-        <p className="mt-2">{quote.customerName}</p>
+        <p className="mt-2">{quote.customerType === 'company' ? 'Company' : 'Private'}</p>
+        {quote.customerType === 'company' ? <p>{quote.companyName}</p> : null}
+        <p>{quote.customerName}{quote.customerType === 'company' && quote.designation ? ` · ${quote.designation}` : ''}</p>
+        {quote.nic ? <p>NIC: {quote.nic}</p> : null}
         <p>{quote.email}</p>
         <p>{quote.phone}</p>
         <p>Preferred contact: {quote.preferredContactMethod}</p>

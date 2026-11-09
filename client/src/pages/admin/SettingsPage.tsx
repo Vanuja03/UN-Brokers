@@ -21,23 +21,15 @@ type Settings = {
   values?: { title: string; description: string }[];
 };
 
-type Staff = { _id: string; name: string; email: string; role: string; active: boolean };
-
 export function SettingsPage() {
   const { admin } = useAuth();
   const [settings, setSettings] = useState<Settings | null>(null);
-  const [staff, setStaff] = useState<Staff[]>([]);
   const [message, setMessage] = useState('');
   const [logs, setLogs] = useState<{ _id: string; action: string; createdAt: string }[]>([]);
-
-  function loadStaff() {
-    api.get('/admin/staff').then((response) => setStaff(response.data.data));
-  }
 
   useEffect(() => {
     if (admin?.role !== 'admin') return;
     api.get('/settings').then((response) => setSettings(response.data.data));
-    loadStaff();
     api.get('/admin/audit').then((response) => setLogs(response.data.data)).catch(() => undefined);
   }, [admin?.role]);
 
@@ -66,25 +58,6 @@ export function SettingsPage() {
     }
   }
 
-  async function createStaff(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
-    try {
-      await api.post('/admin/staff', data);
-      event.currentTarget.reset();
-      setMessage('Staff account created.');
-      loadStaff();
-    } catch (error) {
-      setMessage(getErrorMessage(error, 'Could not create the account.'));
-    }
-  }
-
-  async function toggle(person: Staff) {
-    if (!window.confirm(`${person.active ? 'Deactivate' : 'Activate'} ${person.name}?`)) return;
-    await api.patch(`/admin/staff/${person._id}`, { active: !person.active });
-    loadStaff();
-  }
-
   return (
     <div className="space-y-8">
       <h1 className="text-3xl font-bold">Settings</h1>
@@ -111,24 +84,6 @@ export function SettingsPage() {
         <textarea name="vision" defaultValue={settings.vision} className="field" rows={3} aria-label="Vision" />
         <button className="w-fit rounded-full bg-navy-900 px-4 py-2 text-sm font-semibold text-white" type="submit">Save settings</button>
       </form>
-      <section className="rounded-2xl bg-white p-5">
-        <h2 className="text-xl font-bold">Staff access</h2>
-        <form onSubmit={createStaff} className="mt-4 grid gap-3 md:grid-cols-2">
-          <input name="name" required placeholder="Full name" className="field" />
-          <input name="email" type="email" required placeholder="Email" className="field" />
-          <input name="password" type="password" required minLength={10} placeholder="Temporary password" className="field" />
-          <select name="role" className="field" defaultValue="staff"><option value="staff">Staff</option><option value="admin">Administrator</option></select>
-          <button className="w-fit rounded-full bg-gold px-4 py-2 text-sm font-semibold text-navy-950" type="submit">Create account</button>
-        </form>
-        <ul className="mt-4 divide-y">
-          {staff.map((person) => (
-            <li key={person._id} className="flex items-center justify-between py-3 text-sm">
-              <span>{person.name} · {person.email} · {person.role}</span>
-              <button type="button" className="font-semibold" onClick={() => void toggle(person)}>{person.active ? 'Deactivate' : 'Activate'}</button>
-            </li>
-          ))}
-        </ul>
-      </section>
       <section className="rounded-2xl bg-white p-5">
         <h2 className="text-xl font-bold">Recent staff activity</h2>
         <ul className="mt-3 space-y-2 text-sm text-slate-600">

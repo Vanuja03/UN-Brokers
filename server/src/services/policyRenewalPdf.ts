@@ -26,7 +26,11 @@ export type PolicyRenewalPdfRow = {
   renewalResult: '' | 'done' | 'cancel' | 'sold';
   contactNo: string;
   remarks: string;
+  product?: string;
+  locationAddress?: string;
 };
+
+type RenewalColumn = { title: string; width: number; symbol?: boolean; value: (row: PolicyRenewalPdfRow) => string };
 
 export type PolicyRenewalPdfInput = {
   companyName: string;
@@ -35,25 +39,46 @@ export type PolicyRenewalPdfInput = {
   address: string;
   periodLabel: string;
   rows: PolicyRenewalPdfRow[];
+  title?: string;
+  columns?: RenewalColumn[];
 };
 
-const columns: { title: string; width: number; symbol?: boolean; value: (row: PolicyRenewalPdfRow) => string }[] = [
+const columns: RenewalColumn[] = [
   { title: 'Policy no', width: 58, value: (row) => row.policyNumber },
   { title: 'Vehicle no', width: 54, value: (row) => row.vehicleNumber },
   { title: 'From', width: 44, value: (row) => row.fromDate },
   { title: 'To', width: 44, value: (row) => row.toDate },
   { title: 'Customer', width: 70, value: (row) => row.customerName },
-  { title: 'Address', width: 60, value: (row) => row.postalAddress },
+  { title: 'Address', width: 46, value: (row) => row.postalAddress },
   { title: 'Sum insured', width: 50, value: (row) => row.sumInsured },
   { title: 'Last year', width: 50, value: (row) => row.lastYearPremium },
   { title: 'This year', width: 50, value: (row) => row.thisYearPremium },
   { title: 'Insurer', width: 72, value: (row) => row.insuranceCompany },
   { title: 'Sales person', width: 48, value: (row) => row.salesPerson },
-  { title: 'Agent code', width: 40, value: (row) => row.speciCo },
-  { title: 'Sat', width: 26, value: (row) => row.status },
+  { title: 'Broker code', width: 48, value: (row) => row.speciCo },
+  { title: 'Status', width: 42, value: (row) => row.status },
   { title: 'Contact', width: 52, value: (row) => row.contactNo },
   { title: 'Result', width: 36, symbol: true, value: (row) => row.renewalResult },
-  { title: 'Remarks', width: 46, value: (row) => row.remarks },
+  { title: 'Remarks', width: 36, value: (row) => row.remarks },
+];
+
+export const nonMotorRenewalColumns: RenewalColumn[] = [
+  { title: 'Policy no', width: 62, value: (row) => row.policyNumber },
+  { title: 'Product', width: 52, value: (row) => row.product || '' },
+  { title: 'From', width: 44, value: (row) => row.fromDate },
+  { title: 'To', width: 44, value: (row) => row.toDate },
+  { title: 'Customer', width: 70, value: (row) => row.customerName },
+  { title: 'Address', width: 52, value: (row) => row.postalAddress },
+  { title: 'Location', width: 52, value: (row) => row.locationAddress || '' },
+  { title: 'Sum insured', width: 50, value: (row) => row.sumInsured },
+  { title: 'Last year', width: 48, value: (row) => row.lastYearPremium },
+  { title: 'This year', width: 48, value: (row) => row.thisYearPremium },
+  { title: 'Insurer', width: 64, value: (row) => row.insuranceCompany },
+  { title: 'Sales person', width: 46, value: (row) => row.salesPerson },
+  { title: 'Broker code', width: 46, value: (row) => row.speciCo },
+  { title: 'Status', width: 40, value: (row) => row.status },
+  { title: 'Result', width: 36, symbol: true, value: (row) => row.renewalResult },
+  { title: 'Remarks', width: 40, value: (row) => row.remarks },
 ];
 
 function assetPath(...parts: string[]) {
@@ -124,7 +149,8 @@ export function renderPolicyRenewalPdf(input: PolicyRenewalPdfInput) {
 
     const pageWidth = doc.page.width;
     const left = 16;
-    const tableWidth = columns.reduce((sum, column) => sum + column.width, 0);
+    const cols = input.columns?.length ? input.columns : columns;
+    const tableWidth = cols.reduce((sum, column) => sum + column.width, 0);
     const headerHeight = 92;
     const artY = 10;
     const logoSize = 72;
@@ -145,7 +171,7 @@ export function renderPolicyRenewalPdf(input: PolicyRenewalPdfInput) {
         width: titleWidth,
         align: 'center',
       });
-      doc.fillColor(gold).font('Helvetica-Bold').fontSize(11).text('POLICY RENEWAL LIST', titleX, 40, { width: titleWidth, align: 'center' });
+      doc.fillColor(gold).font('Helvetica-Bold').fontSize(11).text(input.title || 'POLICY RENEWAL LIST', titleX, 40, { width: titleWidth, align: 'center' });
       doc.fillColor('#ffffff').font('Helvetica').fontSize(9).text(`${input.periodLabel}   ·   ${input.rows.length} ${input.rows.length === 1 ? 'policy' : 'policies'}`, titleX, 58, {
         width: titleWidth,
         align: 'center',
@@ -155,7 +181,7 @@ export function renderPolicyRenewalPdf(input: PolicyRenewalPdfInput) {
     const paintColumns = (y: number) => {
       doc.rect(left, y, tableWidth, 18).fill(navy);
       let x = left;
-      columns.forEach((column) => {
+      cols.forEach((column) => {
         doc.fillColor('#ffffff').font('Helvetica-Bold').fontSize(6).text(column.title, x + 2, y + 5, {
           width: column.width - 4,
           height: 10,
@@ -171,9 +197,9 @@ export function renderPolicyRenewalPdf(input: PolicyRenewalPdfInput) {
 
     input.rows.forEach((row, rowIndex) => {
       doc.font('Helvetica').fontSize(6.5);
-      const values = columns.map((column) => cell(column.value(row)));
+      const values = cols.map((column) => cell(column.value(row)));
       const textHeight = Math.max(
-        ...values.map((value, index) => doc.heightOfString(value, { width: columns[index].width - 4 })),
+        ...values.map((value, index) => doc.heightOfString(value, { width: cols[index].width - 4 })),
       );
       const rowHeight = Math.min(30, Math.max(14, textHeight + 4));
       if (y + rowHeight > doc.page.height - 28) {
@@ -185,15 +211,15 @@ export function renderPolicyRenewalPdf(input: PolicyRenewalPdfInput) {
       doc.rect(left, y, tableWidth, rowHeight).strokeColor('#d6e0ec').lineWidth(0.3).stroke();
       let x = left;
       values.forEach((value, index) => {
-        if (columns[index].symbol) drawResult(doc, columns[index].value(row), x, y, columns[index].width, rowHeight);
+        if (cols[index].symbol) drawResult(doc, cols[index].value(row), x, y, cols[index].width, rowHeight);
         else {
           doc.fillColor(index === 0 ? navy : ink).font(index === 0 ? 'Helvetica-Bold' : 'Helvetica').fontSize(6.5).text(value, x + 2, y + 2, {
-            width: columns[index].width - 4,
+            width: cols[index].width - 4,
             height: rowHeight - 3,
             ellipsis: true,
           });
         }
-        x += columns[index].width;
+        x += cols[index].width;
       });
       y += rowHeight;
     });

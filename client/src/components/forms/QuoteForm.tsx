@@ -20,7 +20,11 @@ type QuoteFormProps = {
 };
 
 type FormValues = {
+  customerType: 'private' | 'company';
   customerName: string;
+  nic: string;
+  companyName: string;
+  designation: string;
   phone: string;
   email: string;
   preferredContactMethod: 'phone' | 'email' | 'either';
@@ -94,7 +98,11 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
 
   const form = useForm<FormValues>({
     defaultValues: {
+      customerType: 'private',
       customerName: '',
+      nic: '',
+      companyName: '',
+      designation: '',
       phone: '',
       email: '',
       preferredContactMethod: 'either',
@@ -108,6 +116,7 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
 
   const { register, handleSubmit, watch, setValue, setError, clearErrors, formState } = form;
   const insuranceType = watch('insuranceType');
+  const customerType = watch('customerType');
   const details = watch('insuranceDetails');
   const customerOnly = insuranceType === 'title-insurance';
   const visibleSteps = customerOnly ? ['Your details', 'Review'] : steps;
@@ -158,6 +167,11 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
         applyZod(result.error);
         requestAnimationFrame(() => revealForm(formRef.current));
         return;
+      }
+      if (form.getValues('insuranceType') === 'travel') {
+        const nic = String(result.data.nic || '');
+        const current = form.getValues('insuranceDetails.nicNo');
+        if (nic && (current === undefined || current === '')) setValue('insuranceDetails.nicNo', nic);
       }
       setStep(form.getValues('insuranceType') === 'title-insurance' ? 3 : 2);
       return;
@@ -246,8 +260,38 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
 
       {step === 1 ? (
         <div className="mt-5 grid gap-5">
-          <FieldShell id="customerName" label="Full name" required error={errorFor('customerName')}>
-            <input id="customerName" className="field" autoComplete="name" aria-invalid={Boolean(errorFor('customerName'))} aria-describedby={errorFor('customerName') ? 'customerName-error' : undefined} {...register('customerName')} />
+          <fieldset>
+            <legend className="mb-2 text-sm font-medium text-navy-900">Register as <span className="text-red-700">*</span></legend>
+            <div className="flex flex-wrap gap-3">
+              {([['private', 'Private'], ['company', 'Company']] as const).map(([value, label]) => (
+                <label key={value} className="flex items-center gap-2 rounded-lg border border-slate-300 px-3 py-2 text-sm">
+                  <input type="radio" value={value} {...register('customerType')} /> {label}
+                </label>
+              ))}
+            </div>
+            {errorFor('customerType') ? <p role="alert" className="mt-1 text-sm text-red-700">{errorFor('customerType')}</p> : null}
+          </fieldset>
+          {customerType === 'company' ? (
+            <FieldShell id="companyName" label="Company name" required error={errorFor('companyName')}>
+              <input id="companyName" className="field" autoComplete="organization" aria-invalid={Boolean(errorFor('companyName'))} aria-describedby={errorFor('companyName') ? 'companyName-error' : undefined} {...register('companyName')} />
+            </FieldShell>
+          ) : null}
+          {customerType === 'company' ? (
+            <div className="form-pair">
+              <FieldShell id="customerName" label="Name" required error={errorFor('customerName')}>
+                <input id="customerName" className="field" autoComplete="name" aria-invalid={Boolean(errorFor('customerName'))} aria-describedby={errorFor('customerName') ? 'customerName-error' : undefined} {...register('customerName')} />
+              </FieldShell>
+              <FieldShell id="designation" label="Designation" required error={errorFor('designation')}>
+                <input id="designation" className="field" placeholder="Director, manager, or other role" aria-invalid={Boolean(errorFor('designation'))} aria-describedby={errorFor('designation') ? 'designation-error' : undefined} {...register('designation')} />
+              </FieldShell>
+            </div>
+          ) : (
+            <FieldShell id="customerName" label="Full name" required error={errorFor('customerName')}>
+              <input id="customerName" className="field" autoComplete="name" aria-invalid={Boolean(errorFor('customerName'))} aria-describedby={errorFor('customerName') ? 'customerName-error' : undefined} {...register('customerName')} />
+            </FieldShell>
+          )}
+          <FieldShell id="nic" label="NIC" required error={errorFor('nic')}>
+            <input id="nic" className="field" autoComplete="off" placeholder="123456789V or 200012345678" aria-invalid={Boolean(errorFor('nic'))} aria-describedby={errorFor('nic') ? 'nic-error' : undefined} {...register('nic')} />
           </FieldShell>
           <div className="form-pair">
             <FieldShell id="phone" label="Mobile number" required error={errorFor('phone')}>
@@ -338,7 +382,11 @@ export function QuoteForm({ fixedType, initialType, selectionToken, sourcePage }
       {step === 3 ? (
         <div className="mt-5 space-y-4">
           <dl className="grid gap-3 rounded-xl bg-navy-50 p-4 text-sm">
+            <div><dt className="font-medium text-navy-900">Registered as</dt><dd>{customerType === 'company' ? 'Company' : 'Private'}</dd></div>
+            {customerType === 'company' ? <div><dt className="font-medium text-navy-900">Company name</dt><dd>{watch('companyName')}</dd></div> : null}
             <div><dt className="font-medium text-navy-900">Name</dt><dd>{watch('customerName')}</dd></div>
+            {customerType === 'company' ? <div><dt className="font-medium text-navy-900">Designation</dt><dd>{watch('designation')}</dd></div> : null}
+            <div><dt className="font-medium text-navy-900">NIC</dt><dd>{watch('nic')}</dd></div>
             <div><dt className="font-medium text-navy-900">Contact</dt><dd>{watch('email')} · {watch('phone')}</dd></div>
             {Object.entries(details).filter(([, value]) => value !== '' && value !== false && !(Array.isArray(value) && value.length === 0)).map(([key, value]) => {
               const option = fields.find((field) => field.name === key)?.options?.find((item) => item.value === value);

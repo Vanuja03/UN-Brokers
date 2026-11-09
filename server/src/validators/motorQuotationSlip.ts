@@ -10,9 +10,10 @@ const coverMultiple = coverValue.extend({
   multiple: z.string().trim().max(40, 'Enter 40 characters or fewer.').optional().default(''),
 });
 
-const vehicleTypes = ['Private car', 'Motorcycle', 'Three-wheeler', 'Van', 'Lorry', 'Bus', 'Prime mover', 'Other'] as const;
+const vehicleTypes = ['Car', 'Motorcycle', 'Three-wheeler', 'Van', 'Lorry', 'Bus', 'Prime mover', 'Other'] as const;
 const vehicleUsages = ['Private', 'Hiring', 'Rent a car'] as const;
-const valuedKeys = ['towing', 'wci', 'gt', 'tpd', 'hp'] as const;
+const wciRoles = ['Driver', 'Cleaner'] as const;
+const valuedKeys = ['towing', 'gt', 'windscreen', 'tpd', 'hp'] as const;
 const multipliedKeys = ['pab', 'll'] as const;
 
 export const motorQuotationSlipSchema = z
@@ -29,7 +30,11 @@ export const motorQuotationSlipSchema = z
         const year = Number(value);
         return year >= 1950 && year <= new Date().getFullYear() + 1;
       }, 'Enter a valid year.'),
-    vehicleType: z.enum(vehicleTypes, { errorMap: () => ({ message: 'Choose a vehicle type.' }) }),
+    vehicleType: z
+      .string()
+      .trim()
+      .transform((value) => (value.toLowerCase() === 'private car' ? 'Car' : value))
+      .pipe(z.enum(vehicleTypes, { errorMap: () => ({ message: 'Choose a vehicle type.' }) })),
     vehicleUsage: z.enum(vehicleUsages, { errorMap: () => ({ message: 'Choose a vehicle usage.' }) }),
     covers: z
       .object({
@@ -40,6 +45,7 @@ export const motorQuotationSlipSchema = z
         towing: coverValue,
         wci: coverValue,
         gt: coverValue,
+        windscreen: coverValue,
         pab: coverMultiple,
         ll: coverMultiple,
         tpd: coverValue,
@@ -51,12 +57,15 @@ export const motorQuotationSlipSchema = z
             ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a value for this cover.', path: [key, 'value'] });
           }
         }
+        if (covers.wci.selected && !wciRoles.includes(covers.wci.value as (typeof wciRoles)[number])) {
+          ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Choose driver or cleaner.', path: ['wci', 'value'] });
+        }
         for (const key of multipliedKeys) {
           if (!covers[key].selected) continue;
           if (!covers[key].value.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a value for this cover.', path: [key, 'value'] });
           if (!covers[key].multiple.trim()) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter the multiplication.', path: [key, 'multiple'] });
         }
-        const selected = covers.basic || covers.srcc || covers.tc || covers.flood || valuedKeys.some((key) => covers[key].selected) || multipliedKeys.some((key) => covers[key].selected);
+        const selected = covers.basic || covers.srcc || covers.tc || covers.flood || covers.wci.selected || valuedKeys.some((key) => covers[key].selected) || multipliedKeys.some((key) => covers[key].selected);
         if (!selected) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Tick at least one cover.', path: ['basic'] });
       })
       .transform((covers) => ({
@@ -67,6 +76,7 @@ export const motorQuotationSlipSchema = z
         towing: { selected: covers.towing.selected, value: covers.towing.selected ? covers.towing.value.trim() : '' },
         wci: { selected: covers.wci.selected, value: covers.wci.selected ? covers.wci.value.trim() : '' },
         gt: { selected: covers.gt.selected, value: covers.gt.selected ? covers.gt.value.trim() : '' },
+        windscreen: { selected: covers.windscreen.selected, value: covers.windscreen.selected ? covers.windscreen.value.trim() : '' },
         pab: {
           selected: covers.pab.selected,
           value: covers.pab.selected ? covers.pab.value.trim() : '',
