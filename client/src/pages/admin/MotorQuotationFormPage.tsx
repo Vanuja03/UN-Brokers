@@ -1,6 +1,6 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { blankQuotation, isExtraClaim, isPremiumTaxRow, isYesNoBenefit, resizeInsurers, rowsFor, visibleQuotationRows, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
+import { arrangeQuotationRows, blankQuotation, isExtraClaim, isYesNoBenefit, resizeInsurers, rowsFor, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
 import { api, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { downloadPdf } from './MotorQuotationsPage';
@@ -54,7 +54,7 @@ export function MotorQuotationFormPage() {
       if (id) {
         const response = await api.get(`/motor-quotations/${id}`);
         const saved = response.data.data as MotorQuotationDraft;
-        if (!cancelled) setDraft({ ...saved, rows: visibleQuotationRows(saved.rows) });
+        if (!cancelled) setDraft({ ...saved, rows: arrangeQuotationRows(saved.insuranceType, saved.rows, saved.insurers.length) });
         return;
       }
       const next = blankQuotation('motor', admin?.name || '');
@@ -271,7 +271,7 @@ export function MotorQuotationFormPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-bold">Comparison</h2>
-            <p className="mt-1 text-sm text-slate-600">Click & Go can be renamed. Add another claim when you need one, then enter its name and a value for each insurer.</p>
+            <p className="mt-1 text-sm text-slate-600">Personal accident benefit cover, Special windscreen cover, and Click & Go sit at the bottom. Rename or remove any of them, or add another claim and enter its name and a value for each insurer.</p>
           </div>
           <button
             type="button"
@@ -291,7 +291,7 @@ export function MotorQuotationFormPage() {
           </thead>
           <tbody>
             {draft.rows.map((row, rowIndex) => (
-              <tr key={rowIndex} className={isPremiumTaxRow(row.label) ? 'bg-[#FFB900]' : rowIndex % 2 === 0 ? 'bg-navy-50' : 'bg-white'}>
+              <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-navy-50' : 'bg-white'}>
                 <th className="px-3 py-2 text-left font-semibold text-navy-900">
                   {isExtraClaim(draft.insuranceType, rowIndex) ? (
                     <div className="flex min-w-48 items-center gap-2">
@@ -330,7 +330,7 @@ export function MotorQuotationFormPage() {
                       </select>
                     ) : (
                       <input
-                        className={`field ${isPremiumTaxRow(row.label) ? '!border-[#E5A600] !bg-[#FFB900] font-semibold' : ''}`}
+                        className="field"
                         aria-label={`${row.label} for ${draft.insurers[valueIndex]}`}
                         value={value}
                         onChange={(event) => setCell(rowIndex, valueIndex, event.target.value)}

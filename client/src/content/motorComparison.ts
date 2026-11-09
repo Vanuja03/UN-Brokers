@@ -2,15 +2,15 @@ export const motorBenefitRows = [
   ['totalPremium', 'Total premium with taxes'],
   ['fireTheftAccident', 'Fire / theft / accidental damage'],
   ['floodNaturalPerils', 'Flood and natural perils'],
+  ['strikeRiot', 'Strike, riot and civil commotion'],
+  ['terrorism', 'Terrorism'],
   ['airBagCover', 'Air bag cover'],
   ['thirdPartyInjury', 'Third party bodily injury'],
   ['thirdPartyProperty', 'Third party property damage (LKR)'],
-  ['strikeRiot', 'Strike, riot and civil commotion'],
-  ['terrorism', 'Terrorism'],
   ['towing', 'Towing charges (LKR)'],
+  ['taxiAllowance', 'Free taxi allowance'],
   ['personalAccident', 'Personal accident benefit cover'],
   ['windscreen', 'Special windscreen cover'],
-  ['taxiAllowance', 'Free taxi allowance'],
   ['clickAndGo', 'Click & Go'],
 ] as const;
 

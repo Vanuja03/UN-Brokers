@@ -26,15 +26,19 @@ const comprehensiveRows = [
   'Total premium with taxes',
   'Fire / theft / accidental damage',
   'Flood and natural perils',
+  'Strike, riot and civil commotion',
+  'Terrorism',
   'Air bag cover',
   'Third party bodily injury',
   'Third party property damage (LKR)',
-  'Strike, riot and civil commotion',
-  'Terrorism',
   'Towing charges (LKR)',
+  'Free taxi allowance',
+];
+
+const optionalComprehensiveRows = [
   'Personal accident benefit cover',
   'Special windscreen cover',
-  'Free taxi allowance',
+  'Click & Go',
 ];
 
 export const yesNoBenefitLabels = [
@@ -50,12 +54,12 @@ export function isYesNoBenefit(label: string) {
   return yesNoBenefitSet.has(label);
 }
 
-export function isPremiumTaxRow(label: string) {
-  return label.trim().toLowerCase() === 'total premium with taxes';
-}
-
 export function visibleQuotationRows<T extends { label: string }>(rows: T[]) {
   return rows.filter((row) => row.label.trim().toLowerCase() !== 'malicious act');
+}
+
+function blankValues(count: number) {
+  return Array.from({ length: count }, () => '');
 }
 
 const thirdPartyRows = [
@@ -82,8 +86,30 @@ export function rowLabels(type: MotorCover) {
 
 export function rowsFor(type: MotorCover, insurers: string[]): ComparisonRow[] {
   const rows = rowLabels(type).map((label) => ({ label, values: insurers.map(() => '') }));
-  if (type === 'motor') rows.push({ label: 'Click & Go', values: insurers.map(() => '') });
+  if (type === 'motor') {
+    for (const label of optionalComprehensiveRows) rows.push({ label, values: insurers.map(() => '') });
+  }
   return rows;
+}
+
+export function arrangeQuotationRows(type: MotorCover, rows: ComparisonRow[], insurerCount: number): ComparisonRow[] {
+  const pools = new Map<string, ComparisonRow[]>();
+  for (const row of visibleQuotationRows(rows)) {
+    const key = row.label.trim().toLowerCase();
+    const list = pools.get(key) ?? [];
+    list.push(row);
+    pools.set(key, list);
+  }
+  const take = (label: string) => pools.get(label.trim().toLowerCase())?.shift();
+  const fixed = rowLabels(type).map((label) => take(label) ?? { label, values: blankValues(insurerCount) });
+  const optional = type === 'motor'
+    ? optionalComprehensiveRows.flatMap((label) => {
+      const found = take(label);
+      return found ? [found] : [];
+    })
+    : [];
+  const rest = [...pools.values()].flat();
+  return [...fixed, ...optional, ...rest];
 }
 
 export function isExtraClaim(type: MotorCover, index: number) {
