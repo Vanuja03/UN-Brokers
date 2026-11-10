@@ -27,7 +27,7 @@ const motorQuotationSlipSchema = new Schema(
     yearOfManufacture: { type: String, required: true, trim: true, maxlength: 4 },
     vehicleType: { type: String, required: true, trim: true, maxlength: 80 },
     vehicleUsage: { type: String, required: true, trim: true, maxlength: 80 },
-    sumInsured: { type: Number, required: true, min: 0 },
+    sumInsured: { type: String, required: true, trim: true, maxlength: 80 },
     covers: {
       basic: { type: Boolean, default: false },
       srcc: { type: Boolean, default: false },

@@ -251,9 +251,6 @@ export function MotorQuotationSlipFormPage() {
       const current = new Date().getFullYear() + 1;
       if (!/^\d{4}$/.test(year) || Number(year) < 1950 || Number(year) > current) errors.yearOfManufacture = 'Enter a valid four-digit year.';
     }
-    if (!errors.sumInsured && !/^\d+(\.\d{1,2})?$/.test(values.sumInsured.trim())) {
-      errors.sumInsured = 'Enter a valid amount.';
-    }
     for (const cover of [...tickValue, ...tickValueMid, ...tickValueAfter]) {
       if (values.covers[cover.key].selected && !values.covers[cover.key].value.trim()) errors[`covers.${cover.key}.value`] = 'Enter a value for this cover.';
     }
@@ -324,7 +321,7 @@ export function MotorQuotationSlipFormPage() {
       <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-2">
         <Field label="Customer name" value={draft.customerName} error={fieldErrors.customerName} onChange={(value) => update({ customerName: value })} />
         <Field label="Vehicle no" value={draft.vehicleNumber} error={fieldErrors.vehicleNumber} onChange={(value) => update({ vehicleNumber: value })} />
-        <Field label="Sum insured" value={draft.sumInsured} error={fieldErrors.sumInsured} type="number" onChange={(value) => update({ sumInsured: value })} />
+        <Field label="Sum insured" value={draft.sumInsured} error={fieldErrors.sumInsured} onChange={(value) => update({ sumInsured: value })} />
         <Field label="Make" value={draft.make} error={fieldErrors.make} onChange={(value) => update({ make: value })} />
         <Field label="Model" value={draft.model} error={fieldErrors.model} onChange={(value) => update({ model: value })} />
         <Field label="Manufacturing year" value={draft.yearOfManufacture} error={fieldErrors.yearOfManufacture} inputMode="numeric" onChange={(value) => update({ yearOfManufacture: value })} />

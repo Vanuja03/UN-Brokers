@@ -65,7 +65,7 @@ async function buildPdf(item: {
   yearOfManufacture: string;
   vehicleType: string;
   vehicleUsage: string;
-  sumInsured?: number;
+  sumInsured?: string;
   covers: MotorQuotationSlipInput['covers'];
   preparedBy?: string;
 }) {

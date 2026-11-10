@@ -22,7 +22,7 @@ export type QuotationSlipPdfInput = {
   yearOfManufacture: string;
   vehicleType: string;
   vehicleUsage: string;
-  sumInsured?: number;
+  sumInsured?: string;
   covers: {
     basic: boolean;
     srcc: boolean;
@@ -153,13 +153,10 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
     );
     y = doc.y + 12;
 
-    const sumInsured = input.sumInsured == null
-      ? ''
-      : new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(input.sumInsured);
     const facts: [string, string][] = [
       ['Customer name', input.customerName],
       ['Vehicle no', input.vehicleNumber],
-      ['Sum insured', sumInsured],
+      ['Sum insured', input.sumInsured || ''],
       ['Make', input.make],
       ['Model', input.model],
       ['Manufacturing year', input.yearOfManufacture],
