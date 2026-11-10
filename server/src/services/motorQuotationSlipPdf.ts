@@ -144,60 +144,64 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
       align: 'center',
     });
 
-    let y = headerHeight + 20;
-    doc.fillColor(ink).font('Helvetica').fontSize(11).text(
+    let y = headerHeight + 14;
+    doc.fillColor(ink).font('Helvetica').fontSize(9).text(
       'UN Insurance Brokers requests a quotation from the insurance company for this vehicle and the ticked covers. This slip is not a policy. Cover begins only if an insurer accepts the risk and issues the policy.',
       left,
       y,
       { width },
     );
-    y = doc.y + 16;
+    y = doc.y + 10;
 
+    const sumInsured = input.sumInsured == null
+      ? ''
+      : new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(input.sumInsured);
     const facts: [string, string][] = [
       ['Customer name', input.customerName],
       ['Vehicle no', input.vehicleNumber],
+      ['Sum insured', sumInsured],
       ['Make', input.make],
       ['Model', input.model],
       ['Manufacturing year', input.yearOfManufacture],
       ['Vehicle type', input.vehicleType],
       ['Vehicle usage', input.vehicleUsage],
-      ['Sum insured', input.sumInsured == null ? '' : new Intl.NumberFormat('en-LK', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(input.sumInsured)],
     ];
     const labelWidth = 150;
     facts.forEach((fact, index) => {
-      const rowHeight = 30;
+      const rowHeight = 24;
       if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
-      doc.fillColor('#64748b').font('Helvetica').fontSize(11).text(fact[0], left + 8, y + 9, { width: labelWidth - 12 });
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text(fact[1], left + labelWidth, y + 8, { width: width - labelWidth - 10, ellipsis: true });
+      doc.fillColor('#64748b').font('Helvetica').fontSize(9).text(fact[0], left + 8, y + 7, { width: labelWidth - 12 });
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(10).text(fact[1], left + labelWidth, y + 6, { width: width - labelWidth - 10, height: 12, ellipsis: true });
       y += rowHeight;
     });
 
+    y += 12;
+    doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text('Covers', left, y);
     y += 18;
-    doc.fillColor(navy).font('Helvetica-Bold').fontSize(14).text('Covers', left, y);
+    doc.rect(left, y, width, 22).fill(navy);
+    doc.fillColor(gold).font('Helvetica-Bold').fontSize(9).text('Cover', left + 28, y + 6, { width: 180 });
+    doc.fillColor('#ffffff').text('Requested', left + 220, y + 6, { width: width - 230 });
     y += 22;
-    doc.rect(left, y, width, 26).fill(navy);
-    doc.fillColor(gold).font('Helvetica-Bold').fontSize(11).text('Cover', left + 32, y + 7, { width: 180 });
-    doc.fillColor('#ffffff').text('Requested', left + 220, y + 7, { width: width - 230 });
-    y += 26;
 
     coverRows.forEach((row, index) => {
       const selected = row.selected(input);
-      const rowHeight = 27;
+      const rowHeight = 22;
       if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
-      tick(doc, left + 8, y + 6, selected);
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(11).text(row.label, left + 32, y + 7, { width: 188, height: 14, ellipsis: true });
-      doc.fillColor(selected ? ink : '#94a3b8').font('Helvetica').fontSize(11).text(selected ? row.value(input) || 'Yes' : '—', left + 228, y + 7, {
+      tick(doc, left + 8, y + 4, selected);
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(9).text(row.label, left + 28, y + 6, { width: 188, height: 12, ellipsis: true });
+      doc.fillColor(selected ? ink : '#94a3b8').font('Helvetica').fontSize(9).text(selected ? row.value(input) || 'Yes' : '—', left + 228, y + 6, {
         width: width - 240,
+        height: 12,
         ellipsis: true,
       });
       y += rowHeight;
     });
 
     if (input.preparedBy) {
-      y += 16;
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(11).text(`Prepared by  ${input.preparedBy}`, left, y, { width });
+      y += 12;
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(9).text(`Prepared by  ${input.preparedBy}`, left, y, { width, height: 12 });
     }
 
     const footer = [input.companyName, input.telephone, input.email, input.address].filter(Boolean).join('   ·   ');
