@@ -144,14 +144,14 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
       align: 'center',
     });
 
-    let y = headerHeight + 14;
-    doc.fillColor(ink).font('Helvetica').fontSize(9).text(
+    let y = headerHeight + 16;
+    doc.fillColor(ink).font('Helvetica').fontSize(10).text(
       'UN Insurance Brokers requests a quotation from the insurance company for this vehicle and the ticked covers. This slip is not a policy. Cover begins only if an insurer accepts the risk and issues the policy.',
       left,
       y,
       { width },
     );
-    y = doc.y + 10;
+    y = doc.y + 12;
 
     const sumInsured = input.sumInsured == null
       ? ''
@@ -168,45 +168,45 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
     ];
     const labelWidth = 150;
     facts.forEach((fact, index) => {
-      const rowHeight = 24;
+      const rowHeight = 28;
       if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
-      doc.fillColor('#64748b').font('Helvetica').fontSize(9).text(fact[0], left + 8, y + 7, { width: labelWidth - 12 });
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(10).text(fact[1], left + labelWidth, y + 6, { width: width - labelWidth - 10, height: 12, ellipsis: true });
+      doc.fillColor('#64748b').font('Helvetica').fontSize(10).text(fact[0], left + 8, y + 8, { width: labelWidth - 12, height: 14 });
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(11).text(fact[1], left + labelWidth, y + 7, { width: width - labelWidth - 10, height: 14, ellipsis: true });
       y += rowHeight;
     });
 
-    y += 12;
-    doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text('Covers', left, y);
-    y += 18;
-    doc.rect(left, y, width, 22).fill(navy);
-    doc.fillColor(gold).font('Helvetica-Bold').fontSize(9).text('Cover', left + 28, y + 6, { width: 180 });
-    doc.fillColor('#ffffff').text('Requested', left + 220, y + 6, { width: width - 230 });
-    y += 22;
+    y += 14;
+    doc.fillColor(navy).font('Helvetica-Bold').fontSize(13).text('Covers', left, y);
+    y += 20;
+    doc.rect(left, y, width, 24).fill(navy);
+    doc.fillColor(gold).font('Helvetica-Bold').fontSize(10).text('Cover', left + 30, y + 7, { width: 180 });
+    doc.fillColor('#ffffff').text('Requested', left + 220, y + 7, { width: width - 230 });
+    y += 24;
 
     coverRows.forEach((row, index) => {
       const selected = row.selected(input);
-      const rowHeight = 22;
+      const rowHeight = 26;
       if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
       doc.rect(left, y, width, rowHeight).strokeColor('#d6e0ec').lineWidth(0.4).stroke();
-      tick(doc, left + 8, y + 4, selected);
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(9).text(row.label, left + 28, y + 6, { width: 188, height: 12, ellipsis: true });
-      doc.fillColor(selected ? ink : '#94a3b8').font('Helvetica').fontSize(9).text(selected ? row.value(input) || 'Yes' : '—', left + 228, y + 6, {
+      tick(doc, left + 8, y + 6, selected);
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(11).text(row.label, left + 30, y + 7, { width: 186, height: 14, ellipsis: true });
+      doc.fillColor(selected ? ink : '#94a3b8').font('Helvetica').fontSize(11).text(selected ? row.value(input) || 'Yes' : '—', left + 228, y + 7, {
         width: width - 240,
-        height: 12,
+        height: 14,
         ellipsis: true,
       });
       y += rowHeight;
     });
 
     if (input.preparedBy) {
-      y += 12;
-      doc.fillColor(navy).font('Helvetica-Bold').fontSize(9).text(`Prepared by  ${input.preparedBy}`, left, y, { width, height: 12 });
+      y += 14;
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(11).text(`Prepared by  ${input.preparedBy}`, left, y, { width, height: 14 });
     }
 
     const footer = [input.companyName, input.telephone, input.email, input.address].filter(Boolean).join('   ·   ');
     doc.page.margins.bottom = 0;
-    doc.fillColor('#64748b').font('Helvetica').fontSize(9).text(footer || 'UN Insurance Brokers', left, doc.page.height - 34, {
+    doc.fillColor('#64748b').font('Helvetica').fontSize(10).text(footer || 'UN Insurance Brokers', left, doc.page.height - 32, {
       width,
       height: 16,
       lineBreak: false,
