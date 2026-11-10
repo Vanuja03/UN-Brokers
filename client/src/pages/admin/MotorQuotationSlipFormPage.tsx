@@ -324,12 +324,12 @@ export function MotorQuotationSlipFormPage() {
       <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-2">
         <Field label="Customer name" value={draft.customerName} error={fieldErrors.customerName} onChange={(value) => update({ customerName: value })} />
         <Field label="Vehicle no" value={draft.vehicleNumber} error={fieldErrors.vehicleNumber} onChange={(value) => update({ vehicleNumber: value })} />
+        <Field label="Sum insured" value={draft.sumInsured} error={fieldErrors.sumInsured} type="number" onChange={(value) => update({ sumInsured: value })} />
         <Field label="Make" value={draft.make} error={fieldErrors.make} onChange={(value) => update({ make: value })} />
         <Field label="Model" value={draft.model} error={fieldErrors.model} onChange={(value) => update({ model: value })} />
         <Field label="Manufacturing year" value={draft.yearOfManufacture} error={fieldErrors.yearOfManufacture} inputMode="numeric" onChange={(value) => update({ yearOfManufacture: value })} />
         <SelectField label="Vehicle type" value={draft.vehicleType} options={vehicleTypes.map((item) => item.label)} error={fieldErrors.vehicleType} onChange={(value) => update({ vehicleType: value })} />
         <SelectField label="Vehicle usage" value={draft.vehicleUsage} options={usageTypes.map((item) => item.label)} error={fieldErrors.vehicleUsage} onChange={(value) => update({ vehicleUsage: value })} />
-        <Field label="Sum insured" value={draft.sumInsured} error={fieldErrors.sumInsured} type="number" onChange={(value) => update({ sumInsured: value })} />
       </section>
       <fieldset className="rounded-2xl border border-slate-200 bg-white p-5">
         <legend className="px-1 text-lg font-bold">Covers</legend>
