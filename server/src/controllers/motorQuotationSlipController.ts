@@ -26,6 +26,7 @@ function payload(input: MotorQuotationSlipInput) {
     make: input.make,
     model: input.model,
     yearOfManufacture: input.yearOfManufacture,
+    fuel: input.fuel,
     vehicleType: input.vehicleType,
     vehicleUsage: input.vehicleUsage,
     sumInsured: input.sumInsured,
@@ -63,6 +64,7 @@ async function buildPdf(item: {
   make: string;
   model: string;
   yearOfManufacture: string;
+  fuel?: string;
   vehicleType: string;
   vehicleUsage: string;
   sumInsured?: string;
@@ -78,6 +80,7 @@ async function buildPdf(item: {
     make: item.make,
     model: item.model,
     yearOfManufacture: item.yearOfManufacture,
+    fuel: item.fuel || '',
     vehicleType: item.vehicleType,
     vehicleUsage: item.vehicleUsage,
     sumInsured: item.sumInsured,
@@ -138,6 +141,7 @@ export const downloadMotorQuotationSlip = asyncHandler(async (req, res) => {
     make: item.make,
     model: item.model,
     yearOfManufacture: item.yearOfManufacture,
+    fuel: item.fuel,
     vehicleType: item.vehicleType,
     vehicleUsage: item.vehicleUsage,
     sumInsured: item.sumInsured,

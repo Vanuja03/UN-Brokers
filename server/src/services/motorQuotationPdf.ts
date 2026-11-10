@@ -84,6 +84,10 @@ function cell(value: string) {
   return text || '—';
 }
 
+function isFreeTaxi(label: string) {
+  return label.trim().toLowerCase() === 'free taxi allowance';
+}
+
 export function renderMotorQuotationPdf(input: QuotationPdfInput) {
   return new Promise<Buffer>((resolve, reject) => {
     const doc = new PDFDocument({ size: 'A4', layout: 'landscape', margin: 28 });
@@ -177,12 +181,13 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
     const rows = input.rows.filter((row) => row.label.trim().toLowerCase() !== 'malicious act');
     rows.forEach((row, rowIndex) => {
       const premium = row.label.trim().toLowerCase() === 'total premium with taxes';
+      const taxi = isFreeTaxi(row.label);
       doc.font('Helvetica').fontSize(8.5);
       const samples = [row.label, ...row.values];
       const textHeight = Math.max(
         ...samples.map((sample, index) => doc.heightOfString(cell(sample), { width: (index === 0 ? labelWidth : columnWidth) - 8 })),
       );
-      const rowHeight = Math.min(46, Math.max(22, textHeight + 9));
+      const rowHeight = Math.min(taxi ? 64 : 46, Math.max(22, textHeight + 9));
       if (y + rowHeight > doc.page.height - 32) {
         doc.addPage({ size: 'A4', layout: 'landscape', margin: 28 });
         paintWatermark(doc);
@@ -197,7 +202,7 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
         doc.fillColor(navy).font(premium ? 'Helvetica-Bold' : 'Helvetica').fontSize(8.5).text(cell(value), left + labelWidth + index * columnWidth + 4, y + 5, {
           width: columnWidth - 8,
           height: rowHeight - 8,
-          ellipsis: true,
+          ellipsis: !taxi,
         });
       });
       y += rowHeight;

@@ -25,6 +25,7 @@ const motorQuotationSlipSchema = new Schema(
     make: { type: String, required: true, trim: true, maxlength: 80 },
     model: { type: String, required: true, trim: true, maxlength: 80 },
     yearOfManufacture: { type: String, required: true, trim: true, maxlength: 4 },
+    fuel: { type: String, required: true, trim: true, maxlength: 40 },
     vehicleType: { type: String, required: true, trim: true, maxlength: 80 },
     vehicleUsage: { type: String, required: true, trim: true, maxlength: 80 },
     sumInsured: { type: String, required: true, trim: true, maxlength: 80 },

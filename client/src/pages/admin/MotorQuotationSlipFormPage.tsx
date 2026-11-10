@@ -12,6 +12,7 @@ type SlipDraft = {
   make: string;
   model: string;
   yearOfManufacture: string;
+  fuel: string;
   vehicleType: string;
   vehicleUsage: string;
   sumInsured: string;
@@ -80,6 +81,15 @@ const usageTypes = [
   { value: 'rent-a-car', label: 'Rent a car' },
 ];
 
+const fuelTypes = [
+  { value: 'petrol', label: 'Petrol' },
+  { value: 'diesel', label: 'Diesel' },
+  { value: 'electric', label: 'Electric' },
+  { value: 'phev', label: 'PHEV' },
+  { value: 'hybrid', label: 'Hybrid' },
+  { value: 'other', label: 'Other' },
+];
+
 function listed(value: string, options: { value: string; label: string }[]) {
   const normalized = value.trim().toLowerCase() === 'private car' ? 'car' : value.trim().toLowerCase();
   const found = options.find((item) => item.label.toLowerCase() === normalized || item.value === normalized);
@@ -101,6 +111,7 @@ function blankSlip(): SlipDraft {
     make: '',
     model: '',
     yearOfManufacture: '',
+    fuel: '',
     vehicleType: '',
     vehicleUsage: '',
     sumInsured: '',
@@ -134,6 +145,7 @@ function applyInquiry(draft: SlipDraft, quote: { customerName?: string; insuranc
   draft.make = asText(details.vehicleMake) || draft.make;
   draft.model = asText(details.vehicleModel) || draft.model;
   draft.yearOfManufacture = asText(details.yearOfManufacture) || draft.yearOfManufacture;
+  draft.fuel = listed(asText(details.fuelType), fuelTypes) || draft.fuel;
   draft.vehicleUsage = listed(asText(details.vehicleUsage), usageTypes) || draft.vehicleUsage;
   draft.sumInsured = asText(details.estimatedMarketValue) || draft.sumInsured;
   draft.vehicleType = listed(asText(details.vehicleType), vehicleTypes) || draft.vehicleType;
@@ -161,6 +173,7 @@ export function MotorQuotationSlipFormPage() {
             ...saved,
             vehicleType: listed(saved.vehicleType || '', vehicleTypes),
             vehicleUsage: listed(saved.vehicleUsage || '', usageTypes),
+            fuel: listed(saved.fuel || '', fuelTypes),
             sumInsured: saved.sumInsured == null ? '' : String(saved.sumInsured),
             covers: {
               ...base.covers,
@@ -188,6 +201,7 @@ export function MotorQuotationSlipFormPage() {
           make?: string;
           model?: string;
           yearOfManufacture?: string;
+          fuel?: string;
           usage?: string;
           sumInsured?: string;
           inquiryId?: string | null;
@@ -197,6 +211,7 @@ export function MotorQuotationSlipFormPage() {
         next.make = quotation.make || '';
         next.model = quotation.model || '';
         next.yearOfManufacture = quotation.yearOfManufacture || '';
+        next.fuel = listed(quotation.fuel || '', fuelTypes);
         next.vehicleUsage = listed(quotation.usage || '', usageTypes);
         next.sumInsured = quotation.sumInsured || '';
         next.motorQuotationId = quotationId;
@@ -239,6 +254,7 @@ export function MotorQuotationSlipFormPage() {
       ['make', 'make'],
       ['model', 'model'],
       ['yearOfManufacture', 'yearOfManufacture'],
+      ['fuel', 'fuel'],
       ['vehicleType', 'vehicleType'],
       ['vehicleUsage', 'vehicleUsage'],
       ['sumInsured', 'sumInsured'],
@@ -325,6 +341,7 @@ export function MotorQuotationSlipFormPage() {
         <Field label="Make" value={draft.make} error={fieldErrors.make} onChange={(value) => update({ make: value })} />
         <Field label="Model" value={draft.model} error={fieldErrors.model} onChange={(value) => update({ model: value })} />
         <Field label="Manufacturing year" value={draft.yearOfManufacture} error={fieldErrors.yearOfManufacture} inputMode="numeric" onChange={(value) => update({ yearOfManufacture: value })} />
+        <SelectField label="Fuel type" value={draft.fuel} options={fuelTypes.map((item) => item.label)} error={fieldErrors.fuel} onChange={(value) => update({ fuel: value })} />
         <SelectField label="Vehicle type" value={draft.vehicleType} options={vehicleTypes.map((item) => item.label)} error={fieldErrors.vehicleType} onChange={(value) => update({ vehicleType: value })} />
         <SelectField label="Vehicle usage" value={draft.vehicleUsage} options={usageTypes.map((item) => item.label)} error={fieldErrors.vehicleUsage} onChange={(value) => update({ vehicleUsage: value })} />
       </section>

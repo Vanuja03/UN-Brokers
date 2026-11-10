@@ -20,6 +20,7 @@ export type QuotationSlipPdfInput = {
   make: string;
   model: string;
   yearOfManufacture: string;
+  fuel?: string;
   vehicleType: string;
   vehicleUsage: string;
   sumInsured?: string;
@@ -160,6 +161,7 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
       ['Make', input.make],
       ['Model', input.model],
       ['Manufacturing year', input.yearOfManufacture],
+      ['Fuel type', input.fuel || ''],
       ['Vehicle type', input.vehicleType],
       ['Vehicle usage', input.vehicleUsage],
     ];

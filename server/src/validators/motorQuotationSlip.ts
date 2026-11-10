@@ -12,6 +12,7 @@ const coverMultiple = coverValue.extend({
 
 const vehicleTypes = ['Car', 'Motorcycle', 'Three-wheeler', 'Van', 'Lorry', 'Bus', 'Prime mover', 'Other'] as const;
 const vehicleUsages = ['Private', 'Hiring', 'Rent a car'] as const;
+const fuelTypes = ['Petrol', 'Diesel', 'Electric', 'PHEV', 'Hybrid', 'Other'] as const;
 const wciRoles = ['Driver', 'Cleaner'] as const;
 const valuedKeys = ['towing', 'gt', 'windscreen', 'tpd'] as const;
 const multipliedKeys = ['pab', 'll'] as const;
@@ -30,6 +31,11 @@ export const motorQuotationSlipSchema = z
         const year = Number(value);
         return year >= 1950 && year <= new Date().getFullYear() + 1;
       }, 'Enter a valid year.'),
+    fuel: z
+      .string()
+      .trim()
+      .transform((value) => fuelTypes.find((item) => item.toLowerCase() === value.toLowerCase()) ?? value)
+      .pipe(z.enum(fuelTypes, { errorMap: () => ({ message: 'Choose a fuel type.' }) })),
     vehicleType: z
       .string()
       .trim()
