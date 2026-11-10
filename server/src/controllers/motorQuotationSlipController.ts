@@ -28,6 +28,7 @@ function payload(input: MotorQuotationSlipInput) {
     yearOfManufacture: input.yearOfManufacture,
     vehicleType: input.vehicleType,
     vehicleUsage: input.vehicleUsage,
+    sumInsured: input.sumInsured,
     covers: input.covers,
     inquiryId: objectId(input.inquiryId),
     motorQuotationId: objectId(input.motorQuotationId),
@@ -64,6 +65,7 @@ async function buildPdf(item: {
   yearOfManufacture: string;
   vehicleType: string;
   vehicleUsage: string;
+  sumInsured?: number;
   covers: MotorQuotationSlipInput['covers'];
   preparedBy?: string;
 }) {
@@ -78,6 +80,7 @@ async function buildPdf(item: {
     yearOfManufacture: item.yearOfManufacture,
     vehicleType: item.vehicleType,
     vehicleUsage: item.vehicleUsage,
+    sumInsured: item.sumInsured,
     covers: item.covers,
     preparedBy: item.preparedBy || '',
     companyName: settings?.companyName || 'UN Insurance Brokers',
@@ -137,6 +140,7 @@ export const downloadMotorQuotationSlip = asyncHandler(async (req, res) => {
     yearOfManufacture: item.yearOfManufacture,
     vehicleType: item.vehicleType,
     vehicleUsage: item.vehicleUsage,
+    sumInsured: item.sumInsured,
     covers: item.covers,
     preparedBy: item.preparedBy,
   });

@@ -36,6 +36,21 @@ export const motorQuotationSlipSchema = z
       .transform((value) => (value.toLowerCase() === 'private car' ? 'Car' : value))
       .pipe(z.enum(vehicleTypes, { errorMap: () => ({ message: 'Choose a vehicle type.' }) })),
     vehicleUsage: z.enum(vehicleUsages, { errorMap: () => ({ message: 'Choose a vehicle usage.' }) }),
+    sumInsured: z.preprocess((value) => {
+      if (typeof value === 'number' && Number.isFinite(value)) return String(value);
+      if (typeof value !== 'string') return '';
+      return value.trim().replace(/,/g, '');
+    }, z.string().superRefine((value, ctx) => {
+      if (!value) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'This field is required.' });
+        return;
+      }
+      if (!/^\d+(\.\d{1,2})?$/.test(value)) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Enter a valid amount.' });
+        return;
+      }
+      if (Number(value) > 1_000_000_000) ctx.addIssue({ code: z.ZodIssueCode.custom, message: 'Amount is too large.' });
+    }).transform((value) => Number(value))),
     covers: z
       .object({
         basic: z.boolean(),

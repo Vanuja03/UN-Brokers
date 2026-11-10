@@ -14,6 +14,7 @@ type SlipDraft = {
   yearOfManufacture: string;
   vehicleType: string;
   vehicleUsage: string;
+  sumInsured: string;
   covers: {
     basic: boolean;
     srcc: boolean;
@@ -102,6 +103,7 @@ function blankSlip(): SlipDraft {
     yearOfManufacture: '',
     vehicleType: '',
     vehicleUsage: '',
+    sumInsured: '',
     covers: {
       basic: false,
       srcc: false,
@@ -133,6 +135,7 @@ function applyInquiry(draft: SlipDraft, quote: { customerName?: string; insuranc
   draft.model = asText(details.vehicleModel) || draft.model;
   draft.yearOfManufacture = asText(details.yearOfManufacture) || draft.yearOfManufacture;
   draft.vehicleUsage = listed(asText(details.vehicleUsage), usageTypes) || draft.vehicleUsage;
+  draft.sumInsured = asText(details.estimatedMarketValue) || draft.sumInsured;
   draft.vehicleType = listed(asText(details.vehicleType), vehicleTypes) || draft.vehicleType;
 }
 
@@ -158,6 +161,7 @@ export function MotorQuotationSlipFormPage() {
             ...saved,
             vehicleType: listed(saved.vehicleType || '', vehicleTypes),
             vehicleUsage: listed(saved.vehicleUsage || '', usageTypes),
+            sumInsured: saved.sumInsured == null ? '' : String(saved.sumInsured),
             covers: {
               ...base.covers,
               ...saved.covers,
@@ -185,6 +189,7 @@ export function MotorQuotationSlipFormPage() {
           model?: string;
           yearOfManufacture?: string;
           usage?: string;
+          sumInsured?: string;
           inquiryId?: string | null;
         };
         next.customerName = quotation.customerName || '';
@@ -193,6 +198,7 @@ export function MotorQuotationSlipFormPage() {
         next.model = quotation.model || '';
         next.yearOfManufacture = quotation.yearOfManufacture || '';
         next.vehicleUsage = listed(quotation.usage || '', usageTypes);
+        next.sumInsured = quotation.sumInsured || '';
         next.motorQuotationId = quotationId;
         if (quotation.inquiryId) {
           next.inquiryId = quotation.inquiryId;
@@ -235,6 +241,7 @@ export function MotorQuotationSlipFormPage() {
       ['yearOfManufacture', 'yearOfManufacture'],
       ['vehicleType', 'vehicleType'],
       ['vehicleUsage', 'vehicleUsage'],
+      ['sumInsured', 'sumInsured'],
     ];
     for (const [key] of required) {
       if (!String(values[key]).trim()) errors[key] = 'This field is required.';
@@ -243,6 +250,9 @@ export function MotorQuotationSlipFormPage() {
       const year = values.yearOfManufacture.trim();
       const current = new Date().getFullYear() + 1;
       if (!/^\d{4}$/.test(year) || Number(year) < 1950 || Number(year) > current) errors.yearOfManufacture = 'Enter a valid four-digit year.';
+    }
+    if (!errors.sumInsured && !/^\d+(\.\d{1,2})?$/.test(values.sumInsured.trim())) {
+      errors.sumInsured = 'Enter a valid amount.';
     }
     for (const cover of [...tickValue, ...tickValueMid, ...tickValueAfter]) {
       if (values.covers[cover.key].selected && !values.covers[cover.key].value.trim()) errors[`covers.${cover.key}.value`] = 'Enter a value for this cover.';
@@ -319,6 +329,7 @@ export function MotorQuotationSlipFormPage() {
         <Field label="Manufacturing year" value={draft.yearOfManufacture} error={fieldErrors.yearOfManufacture} inputMode="numeric" onChange={(value) => update({ yearOfManufacture: value })} />
         <SelectField label="Vehicle type" value={draft.vehicleType} options={vehicleTypes.map((item) => item.label)} error={fieldErrors.vehicleType} onChange={(value) => update({ vehicleType: value })} />
         <SelectField label="Vehicle usage" value={draft.vehicleUsage} options={usageTypes.map((item) => item.label)} error={fieldErrors.vehicleUsage} onChange={(value) => update({ vehicleUsage: value })} />
+        <Field label="Sum insured" value={draft.sumInsured} error={fieldErrors.sumInsured} type="number" onChange={(value) => update({ sumInsured: value })} />
       </section>
       <fieldset className="rounded-2xl border border-slate-200 bg-white p-5">
         <legend className="px-1 text-lg font-bold">Covers</legend>
@@ -514,10 +525,10 @@ function SelectField({ label, value, options, onChange, error }: { label: string
   );
 }
 
-function Field({ label, value, onChange, error, inputMode }: { label: string; value: string; onChange: (value: string) => void; error?: string; inputMode?: 'numeric' }) {
+function Field({ label, value, onChange, error, inputMode, type = 'text' }: { label: string; value: string; onChange: (value: string) => void; error?: string; inputMode?: 'numeric' | 'decimal'; type?: 'text' | 'number' }) {
   return (
     <label className="text-sm font-medium text-navy-900">{label}
-      <input className="field mt-1.5" value={value} inputMode={inputMode} aria-invalid={error ? true : undefined} onChange={(event) => onChange(event.target.value)} />
+      <input className="field mt-1.5" type={type} min={type === 'number' ? '0' : undefined} step={type === 'number' ? '0.01' : undefined} value={value} inputMode={inputMode ?? (type === 'number' ? 'decimal' : undefined)} aria-invalid={error ? true : undefined} onChange={(event) => onChange(event.target.value)} />
       {error ? <span className="mt-1 block text-sm text-red-700">{error}</span> : null}
     </label>
   );
