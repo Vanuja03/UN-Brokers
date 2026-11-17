@@ -26,6 +26,8 @@ import { MotorQuotationSlipsPage } from '../pages/admin/MotorQuotationSlipsPage'
 import { MotorQuotationSlipFormPage } from '../pages/admin/MotorQuotationSlipFormPage';
 import { NonMotorQuotationSlipFormPage } from '../pages/admin/NonMotorQuotationSlipFormPage';
 import { ContactsPage } from '../pages/admin/ContactsPage';
+import { DebitAdviceFormPage } from '../pages/admin/DebitAdviceFormPage';
+import { DebitAdvicePage } from '../pages/admin/DebitAdvicePage';
 import { PolicyRenewalsPage } from '../pages/admin/PolicyRenewalsPage';
 import { ContentPage } from '../pages/admin/ContentPage';
 import { SettingsPage } from '../pages/admin/SettingsPage';
@@ -70,6 +72,9 @@ export function AppRoutes() {
           <Route path="motor-quotations/slips/:id" element={<MotorQuotationSlipFormPage />} />
           <Route path="motor-quotations/:id" element={<MotorQuotationFormPage />} />
           <Route path="policy-renewals" element={<PolicyRenewalsPage />} />
+          <Route path="debit-advice" element={<DebitAdvicePage />} />
+          <Route path="debit-advice/new" element={<DebitAdviceFormPage />} />
+          <Route path="debit-advice/:id" element={<DebitAdviceFormPage />} />
           <Route path="contacts" element={<ContactsPage />} />
           <Route path="content" element={<ContentPage />} />
           <Route path="users" element={<UsersPage />} />

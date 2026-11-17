@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom';
-import { Car, ClipboardList, FileText, LayoutDashboard, LogOut, Mail, PanelLeftClose, PanelLeftOpen, PenLine, Settings, Shield, Users, type LucideIcon } from 'lucide-react';
+import { Car, ClipboardList, FileText, LayoutDashboard, LogOut, Mail, PanelLeftClose, PanelLeftOpen, Receipt, Settings, Shield, Users, type LucideIcon } from 'lucide-react';
 import { Logo } from '../common/Logo';
 import { ProductCredit } from '../common/ProductCredit';
 import { PageMotion } from '../common/PageMotion';
@@ -20,8 +20,8 @@ const links: { to: string; label: string; icon: LucideIcon }[] = [
   { to: '/admin/motor-quotations', label: 'Motor quotations', icon: Car },
   { to: '/admin/motor-quotations/slips', label: 'Quotation slips', icon: ClipboardList },
   { to: '/admin/policy-renewals', label: 'Policies', icon: Shield },
+  { to: '/admin/debit-advice', label: 'Debit advice', icon: Receipt },
   { to: '/admin/contacts', label: 'Messages', icon: Mail },
-  { to: '/admin/content', label: 'Content', icon: PenLine },
   { to: '/admin/users', label: 'Users', icon: Users },
   { to: '/admin/settings', label: 'Settings', icon: Settings },
 ];

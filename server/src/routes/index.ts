@@ -61,6 +61,13 @@ import {
 } from '../controllers/nonMotorQuotationSlipController.js';
 import { receiveDebitNote, scanDebitNote } from '../controllers/debitNoteScanController.js';
 import {
+  createDebitAdvice,
+  downloadDebitAdvice,
+  getDebitAdvice,
+  listDebitAdvice,
+  updateDebitAdvice,
+} from '../controllers/debitAdviceController.js';
+import {
   createPolicyRegister,
   deletePolicyRegister,
   listPolicyRegisters,
@@ -92,6 +99,7 @@ import { authLimiter, inquiryLimiter } from '../middleware/rateLimits.js';
 import { validateBody } from '../middleware/validate.js';
 import { faqSchema, insuranceContentSchema, partnerSchema, settingsSchema, teamSchema, testimonialSchema } from '../validators/content.js';
 import { motorQuotationSlipSchema } from '../validators/motorQuotationSlip.js';
+import { debitAdviceSchema } from '../validators/debitAdvice.js';
 import { nonMotorQuotationSlipSchema } from '../validators/nonMotorQuotationSlip.js';
 import { nonMotorPolicyRegisterSchema } from '../validators/nonMotorPolicyRegister.js';
 import { policyRegisterSchema } from '../validators/policyRegister.js';
@@ -166,6 +174,12 @@ router.post('/non-motor-quotation-slips', ...staff, validateBody(nonMotorQuotati
 router.get('/non-motor-quotation-slips/:id/pdf', requireAuth, downloadNonMotorQuotationSlip);
 router.get('/non-motor-quotation-slips/:id', requireAuth, getNonMotorQuotationSlip);
 router.patch('/non-motor-quotation-slips/:id', ...staff, validateBody(nonMotorQuotationSlipSchema), updateNonMotorQuotationSlip);
+
+router.get('/debit-advice', requireAuth, listDebitAdvice);
+router.post('/debit-advice', ...staff, validateBody(debitAdviceSchema), createDebitAdvice);
+router.get('/debit-advice/:id/pdf', requireAuth, downloadDebitAdvice);
+router.get('/debit-advice/:id', requireAuth, getDebitAdvice);
+router.patch('/debit-advice/:id', ...staff, validateBody(debitAdviceSchema), updateDebitAdvice);
 
 router.post('/contacts', inquiryLimiter, createContact);
 router.get('/contacts', requireAuth, listContacts);
