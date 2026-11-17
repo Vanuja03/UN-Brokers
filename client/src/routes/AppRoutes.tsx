@@ -24,6 +24,7 @@ import { MotorQuotationsPage } from '../pages/admin/MotorQuotationsPage';
 import { MotorQuotationFormPage } from '../pages/admin/MotorQuotationFormPage';
 import { MotorQuotationSlipsPage } from '../pages/admin/MotorQuotationSlipsPage';
 import { MotorQuotationSlipFormPage } from '../pages/admin/MotorQuotationSlipFormPage';
+import { NonMotorQuotationSlipFormPage } from '../pages/admin/NonMotorQuotationSlipFormPage';
 import { ContactsPage } from '../pages/admin/ContactsPage';
 import { PolicyRenewalsPage } from '../pages/admin/PolicyRenewalsPage';
 import { ContentPage } from '../pages/admin/ContentPage';
@@ -64,6 +65,8 @@ export function AppRoutes() {
           <Route path="motor-quotations/new" element={<MotorQuotationFormPage />} />
           <Route path="motor-quotations/slips" element={<MotorQuotationSlipsPage />} />
           <Route path="motor-quotations/slips/new" element={<MotorQuotationSlipFormPage />} />
+          <Route path="motor-quotations/slips/non-motor/new" element={<NonMotorQuotationSlipFormPage />} />
+          <Route path="motor-quotations/slips/non-motor/:id" element={<NonMotorQuotationSlipFormPage />} />
           <Route path="motor-quotations/slips/:id" element={<MotorQuotationSlipFormPage />} />
           <Route path="motor-quotations/:id" element={<MotorQuotationFormPage />} />
           <Route path="policy-renewals" element={<PolicyRenewalsPage />} />

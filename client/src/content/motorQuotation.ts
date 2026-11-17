@@ -32,14 +32,38 @@ const comprehensiveRows = [
   'Third party bodily injury',
   'Third party property damage (LKR)',
   'Towing charges (LKR)',
-  'Free taxi allowance',
 ];
 
 const optionalComprehensiveRows = [
   'Personal accident benefit cover',
   'Special windscreen cover',
   'Click & Go',
+  'Free taxi allowance',
 ];
+
+const freeTaxiDefaults: { match: (name: string) => boolean; text: string }[] = [
+  {
+    match: (name) => name.includes('lolc'),
+    text: '3000 PER DAY UP TO MAXIMUM 10 DAYS\nEXCLUDING 1ST 2 DAYS',
+  },
+  {
+    match: (name) => name.includes('sri lanka') || /\bslic\b/.test(name),
+    text: '2000 PER DAY UP TO MAXIMUM 10 DAYS\nEXCLUDING AGENT REPAIR',
+  },
+  {
+    match: (name) => name.includes('hnb'),
+    text: '1500 PER DAY UP TO MAXIMUM 10 DAYS\nEXCLUDING 1ST 4 DAYS',
+  },
+];
+
+export function freeTaxiDefault(insurer: string) {
+  const name = insurer.trim().toLowerCase();
+  return freeTaxiDefaults.find((item) => item.match(name))?.text ?? '';
+}
+
+function isFreeTaxiLabel(label: string) {
+  return label.trim().toLowerCase() === 'free taxi allowance';
+}
 
 export const yesNoBenefitLabels = [
   'Fire / theft / accidental damage',
@@ -73,7 +97,7 @@ const thirdPartyRows = [
 ];
 
 export const defaultInsurers = [
-  'Fairfirst Insurance',
+  'Co-operative Insurance',
   'Continental Insurance',
   'LOLC General Insurance',
   'HNB General Insurance',
@@ -87,7 +111,9 @@ export function rowLabels(type: MotorCover) {
 export function rowsFor(type: MotorCover, insurers: string[]): ComparisonRow[] {
   const rows = rowLabels(type).map((label) => ({ label, values: insurers.map(() => '') }));
   if (type === 'motor') {
-    for (const label of optionalComprehensiveRows) rows.push({ label, values: insurers.map(() => '') });
+    for (const label of optionalComprehensiveRows) {
+      rows.push({ label, values: insurers.map((insurer) => (isFreeTaxiLabel(label) ? freeTaxiDefault(insurer) : '')) });
+    }
   }
   return rows;
 }
@@ -110,6 +136,19 @@ export function arrangeQuotationRows(type: MotorCover, rows: ComparisonRow[], in
     : [];
   const rest = [...pools.values()].flat();
   return [...fixed, ...optional, ...rest];
+}
+
+export function fillEmptyTaxiDefaults(rows: ComparisonRow[], insurers: string[]): ComparisonRow[] {
+  return rows.map((row) => {
+    if (!isFreeTaxiLabel(row.label)) return row;
+    return {
+      ...row,
+      values: insurers.map((insurer, index) => {
+        const current = row.values[index] ?? '';
+        return current.trim() ? current : freeTaxiDefault(insurer);
+      }),
+    };
+  });
 }
 
 export function isExtraClaim(type: MotorCover, index: number) {
@@ -144,7 +183,28 @@ export function resizeInsurers(draft: MotorQuotationDraft, insurers: string[]): 
     insurers,
     rows: draft.rows.map((row) => ({
       label: row.label,
-      values: insurers.map((_, index) => row.values[index] ?? ''),
+      values: insurers.map((insurer, index) => {
+        if (index < row.values.length) return row.values[index] ?? '';
+        return isFreeTaxiLabel(row.label) ? freeTaxiDefault(insurer) : '';
+      }),
     })),
+  };
+}
+
+export function renameInsurer(draft: MotorQuotationDraft, index: number, nextName: string): MotorQuotationDraft {
+  const previousDefault = freeTaxiDefault(draft.insurers[index] || '');
+  const nextDefault = freeTaxiDefault(nextName);
+  return {
+    ...draft,
+    insurers: draft.insurers.map((name, insurerIndex) => (insurerIndex === index ? nextName : name)),
+    rows: draft.rows.map((row) => {
+      if (!isFreeTaxiLabel(row.label)) return row;
+      const current = row.values[index] ?? '';
+      const keep = current.trim() !== '' && current !== previousDefault;
+      return {
+        ...row,
+        values: row.values.map((value, valueIndex) => (valueIndex === index ? (keep ? value : nextDefault) : value)),
+      };
+    }),
   };
 }

@@ -43,6 +43,7 @@ const motorQuotationSlipSchema = new Schema(
       tpd: { type: valuedCoverSchema, default: () => ({}) },
       hp: { type: valuedCoverSchema, default: () => ({}) },
     },
+    notes: { type: String, default: '', trim: true, maxlength: 800 },
     slipDate: { type: String, required: true, maxlength: 10 },
     preparedBy: { type: String, default: '', maxlength: 120 },
     inquiryId: { type: Schema.Types.ObjectId, ref: 'Quote', default: null },

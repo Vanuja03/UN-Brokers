@@ -8,10 +8,10 @@ export const motorBenefitRows = [
   ['thirdPartyInjury', 'Third party bodily injury'],
   ['thirdPartyProperty', 'Third party property damage (LKR)'],
   ['towing', 'Towing charges (LKR)'],
-  ['taxiAllowance', 'Free taxi allowance'],
   ['personalAccident', 'Personal accident benefit cover'],
   ['windscreen', 'Special windscreen cover'],
   ['clickAndGo', 'Click & Go'],
+  ['taxiAllowance', 'Free taxi allowance'],
 ] as const;
 
 export type MotorBenefitKey = (typeof motorBenefitRows)[number][0];

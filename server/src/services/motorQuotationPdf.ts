@@ -187,7 +187,7 @@ export function renderMotorQuotationPdf(input: QuotationPdfInput) {
       const textHeight = Math.max(
         ...samples.map((sample, index) => doc.heightOfString(cell(sample), { width: (index === 0 ? labelWidth : columnWidth) - 8 })),
       );
-      const rowHeight = Math.min(taxi ? 64 : 46, Math.max(22, textHeight + 9));
+      const rowHeight = Math.min(taxi ? 88 : 46, Math.max(22, textHeight + 9));
       if (y + rowHeight > doc.page.height - 32) {
         doc.addPage({ size: 'A4', layout: 'landscape', margin: 28 });
         paintWatermark(doc);

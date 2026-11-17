@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, getErrorMessage, getFieldErrors } from '../../services/api';
+import { DebitNoteScan } from './DebitNoteScan';
 
 type PolicyStatus = 'ren' | 'new' | 'refund' | 'additional';
 
@@ -201,6 +202,7 @@ export function NonMotorPolicyRegisterSection() {
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof FormState, string>>>({});
   const [saving, setSaving] = useState(false);
+  const [fromScan, setFromScan] = useState(false);
 
   function load(nextSearch = search) {
     return api.get('/non-motor-policy-registers', { params: { search: nextSearch } }).then((response) => setRows(response.data.data));
@@ -228,7 +230,25 @@ export function NonMotorPolicyRegisterSection() {
     setForm(blank);
     setError('');
     setFieldErrors({});
+    setFromScan(false);
     setShowForm(true);
+  }
+
+  function applyScan(fields: Record<string, string>) {
+    const next = { ...blank };
+    for (const [key, value] of Object.entries(fields)) {
+      if (!(key in next) || !value) continue;
+      if (key === 'special' && !statusOptions.some((option) => option.value === value)) continue;
+      if (key === 'commissionReceived') continue;
+      next[key as keyof FormState] = value as never;
+    }
+    setEditingId(null);
+    setForm(next);
+    setFieldErrors({});
+    setError('');
+    setFromScan(true);
+    setShowForm(true);
+    window.setTimeout(() => document.getElementById('policy-register-form')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 0);
   }
 
   async function save(event: FormEvent) {
@@ -285,12 +305,14 @@ export function NonMotorPolicyRegisterSection() {
         </div>
         <button type="button" className="rounded-full bg-navy-900 px-4 py-2 text-sm font-semibold text-white" onClick={startAdd}>Register new policy</button>
       </div>
+      <DebitNoteScan book="non-motor" onUse={applyScan} />
       <input className="field mt-4" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search policy no, product, name, or debit note" aria-label="Search non-motor policies" />
       {error ? <p role="alert" className="mt-4 text-sm text-red-700">{error}</p> : null}
 
       {showForm ? (
-        <form className="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 xl:grid-cols-3" noValidate onSubmit={(event) => void save(event)}>
+        <form id="policy-register-form" className="mt-5 grid gap-4 rounded-2xl border border-slate-200 bg-white p-4 sm:grid-cols-2 xl:grid-cols-3" noValidate onSubmit={(event) => void save(event)}>
           <h3 className="sm:col-span-2 xl:col-span-3 text-lg font-bold">{editingId ? 'Edit registered policy' : 'Register new policy'}</h3>
+          {fromScan ? <p className="rounded-xl bg-gold/20 px-3 py-2 text-sm text-navy-950 sm:col-span-2 xl:col-span-3">These details were read from a debit note and are not saved yet. Check every field, then save the policy. The document was not stored.</p> : null}
           <Field name="debitDate" label="Debit date" type="date" value={form.debitDate} error={fieldErrors.debitDate} onChange={(value) => update('debitDate', value)} required />
           <Field name="riskDate" label="Risk date" type="date" value={form.riskDate} error={fieldErrors.riskDate} onChange={(value) => update('riskDate', value)} required />
           <Field name="renewalDate" label="Renewal date" type="date" value={form.renewalDate} error={fieldErrors.renewalDate} onChange={(value) => update('renewalDate', value)} />
@@ -383,7 +405,7 @@ export function NonMotorPolicyRegisterSection() {
                 <td className="px-3 py-2">{row.commissionReference}</td>
                 <td className="whitespace-nowrap px-3 py-2">{day(row.commissionReceivedDate || '')}</td>
                 <td className="whitespace-nowrap px-3 py-2">
-                  <button type="button" className="font-semibold text-navy-900 underline" onClick={() => { setEditingId(row._id); setForm(toForm(row)); setFieldErrors({}); setShowForm(true); }}>Edit</button>
+                  <button type="button" className="font-semibold text-navy-900 underline" onClick={() => { setEditingId(row._id); setForm(toForm(row)); setFieldErrors({}); setFromScan(false); setShowForm(true); }}>Edit</button>
                   <button type="button" className="ml-3 font-semibold text-red-700 underline" onClick={() => void remove(row)}>Delete</button>
                 </td>
               </tr>

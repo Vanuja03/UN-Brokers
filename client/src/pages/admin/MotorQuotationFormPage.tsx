@@ -1,6 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import { arrangeQuotationRows, blankQuotation, isExtraClaim, isYesNoBenefit, resizeInsurers, rowsFor, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
+import { insurerPartners } from '../../content/insurerPartners';
+import { arrangeQuotationRows, blankQuotation, fillEmptyTaxiDefaults, isExtraClaim, isYesNoBenefit, renameInsurer, resizeInsurers, rowsFor, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
 import { api, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { downloadPdf } from './MotorQuotationsPage';
@@ -54,7 +55,7 @@ export function MotorQuotationFormPage() {
       if (id) {
         const response = await api.get(`/motor-quotations/${id}`);
         const saved = response.data.data as MotorQuotationDraft;
-        if (!cancelled) setDraft({ ...saved, rows: arrangeQuotationRows(saved.insuranceType, saved.rows, saved.insurers.length) });
+        if (!cancelled) setDraft({ ...saved, rows: fillEmptyTaxiDefaults(arrangeQuotationRows(saved.insuranceType, saved.rows, saved.insurers.length), saved.insurers) });
         return;
       }
       const next = blankQuotation('motor', admin?.name || '');
@@ -106,6 +107,10 @@ export function MotorQuotationFormPage() {
           : item),
       };
     });
+  }
+
+  function nextPartnerName(chosen: string[]) {
+    return insurerPartners.find((partner) => !chosen.includes(partner.name))?.name || insurerPartners[0]?.name || 'Insurer';
   }
 
   function changeType(insuranceType: MotorCover) {
@@ -237,7 +242,7 @@ export function MotorQuotationFormPage() {
             type="button"
             className="text-sm font-semibold text-navy-900"
             disabled={draft.insurers.length >= 8}
-            onClick={() => update(resizeInsurers(draft, [...draft.insurers, 'Insurer']))}
+            onClick={() => update(resizeInsurers(draft, [...draft.insurers, nextPartnerName(draft.insurers)]))}
           >
             Add insurer
           </button>
@@ -245,15 +250,15 @@ export function MotorQuotationFormPage() {
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           {draft.insurers.map((insurer, index) => (
             <div key={index} className="flex gap-2">
-              <input
+              <select
                 className="field"
                 aria-label={`Insurer ${index + 1}`}
                 value={insurer}
-                onChange={(event) => {
-                  const insurers = draft.insurers.map((name, insurerIndex) => (insurerIndex === index ? event.target.value : name));
-                  update({ insurers });
-                }}
-              />
+                onChange={(event) => update(renameInsurer(draft, index, event.target.value))}
+              >
+                {insurer && !insurerPartners.some((partner) => partner.name === insurer) ? <option value={insurer}>{insurer}</option> : null}
+                {insurerPartners.map((partner) => <option key={partner.name} value={partner.name}>{partner.name}</option>)}
+              </select>
               {draft.insurers.length > 1 ? (
                 <button
                   type="button"
@@ -271,7 +276,7 @@ export function MotorQuotationFormPage() {
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="font-bold">Comparison</h2>
-            <p className="mt-1 text-sm text-slate-600">Personal accident benefit cover, Special windscreen cover, and Click & Go sit at the bottom. Rename or remove any of them, or add another claim and enter its name and a value for each insurer.</p>
+            <p className="mt-1 text-sm text-slate-600">Personal accident benefit cover, Special windscreen cover, Click & Go, and Free taxi allowance sit at the bottom. Free taxi allowance starts with the usual wording for LOLC, Sri Lanka Insurance, and HNB. Rename or remove any of them, or add another claim and enter its name and a value for each insurer.</p>
           </div>
           <button
             type="button"
@@ -328,6 +333,14 @@ export function MotorQuotationFormPage() {
                         <option value="Yes">Yes</option>
                         <option value="No">No</option>
                       </select>
+                    ) : row.label.trim().toLowerCase() === 'free taxi allowance' ? (
+                      <textarea
+                        className="field min-h-24"
+                        rows={4}
+                        aria-label={`${row.label} for ${draft.insurers[valueIndex]}`}
+                        value={value}
+                        onChange={(event) => setCell(rowIndex, valueIndex, event.target.value)}
+                      />
                     ) : (
                       <input
                         className="field"

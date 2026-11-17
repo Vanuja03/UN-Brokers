@@ -31,6 +31,7 @@ function payload(input: MotorQuotationSlipInput) {
     vehicleUsage: input.vehicleUsage,
     sumInsured: input.sumInsured,
     covers: input.covers,
+    notes: input.notes,
     inquiryId: objectId(input.inquiryId),
     motorQuotationId: objectId(input.motorQuotationId),
   };
@@ -69,6 +70,7 @@ async function buildPdf(item: {
   vehicleUsage: string;
   sumInsured?: string;
   covers: MotorQuotationSlipInput['covers'];
+  notes?: string;
   preparedBy?: string;
 }) {
   const settings = await SiteSettings.findOne();
@@ -85,6 +87,7 @@ async function buildPdf(item: {
     vehicleUsage: item.vehicleUsage,
     sumInsured: item.sumInsured,
     covers: item.covers,
+    notes: item.notes || '',
     preparedBy: item.preparedBy || '',
     companyName: settings?.companyName || 'UN Insurance Brokers',
     telephone: settings?.telephone || '',
@@ -146,6 +149,7 @@ export const downloadMotorQuotationSlip = asyncHandler(async (req, res) => {
     vehicleUsage: item.vehicleUsage,
     sumInsured: item.sumInsured,
     covers: item.covers,
+    notes: item.notes,
     preparedBy: item.preparedBy,
   });
   res.setHeader('Content-Type', 'application/pdf');

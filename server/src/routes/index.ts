@@ -53,6 +53,14 @@ import {
   updateMotorQuotationSlip,
 } from '../controllers/motorQuotationSlipController.js';
 import {
+  createNonMotorQuotationSlip,
+  downloadNonMotorQuotationSlip,
+  getNonMotorQuotationSlip,
+  listNonMotorQuotationSlips,
+  updateNonMotorQuotationSlip,
+} from '../controllers/nonMotorQuotationSlipController.js';
+import { receiveDebitNote, scanDebitNote } from '../controllers/debitNoteScanController.js';
+import {
   createPolicyRegister,
   deletePolicyRegister,
   listPolicyRegisters,
@@ -84,6 +92,7 @@ import { authLimiter, inquiryLimiter } from '../middleware/rateLimits.js';
 import { validateBody } from '../middleware/validate.js';
 import { faqSchema, insuranceContentSchema, partnerSchema, settingsSchema, teamSchema, testimonialSchema } from '../validators/content.js';
 import { motorQuotationSlipSchema } from '../validators/motorQuotationSlip.js';
+import { nonMotorQuotationSlipSchema } from '../validators/nonMotorQuotationSlip.js';
 import { nonMotorPolicyRegisterSchema } from '../validators/nonMotorPolicyRegister.js';
 import { policyRegisterSchema } from '../validators/policyRegister.js';
 import { policyRenewalUpdateSchema } from '../validators/policyRenewal.js';
@@ -116,6 +125,7 @@ router.patch('/quotes/:id', ...staff, updateQuote);
 router.delete('/quotes/:id', ...staff, archiveQuote);
 
 router.get('/policy-registers', requireAuth, listPolicyRegisters);
+router.post('/policy-registers/scan', ...staff, receiveDebitNote, scanDebitNote);
 router.post('/policy-registers', ...staff, validateBody(policyRegisterSchema), createPolicyRegister);
 router.patch('/policy-registers/:id', ...staff, validateBody(policyRegisterSchema), updatePolicyRegister);
 router.delete('/policy-registers/:id', ...staff, deletePolicyRegister);
@@ -150,6 +160,12 @@ router.post('/motor-quotation-slips', ...staff, validateBody(motorQuotationSlipS
 router.get('/motor-quotation-slips/:id/pdf', requireAuth, downloadMotorQuotationSlip);
 router.get('/motor-quotation-slips/:id', requireAuth, getMotorQuotationSlip);
 router.patch('/motor-quotation-slips/:id', ...staff, validateBody(motorQuotationSlipSchema), updateMotorQuotationSlip);
+
+router.get('/non-motor-quotation-slips', requireAuth, listNonMotorQuotationSlips);
+router.post('/non-motor-quotation-slips', ...staff, validateBody(nonMotorQuotationSlipSchema), createNonMotorQuotationSlip);
+router.get('/non-motor-quotation-slips/:id/pdf', requireAuth, downloadNonMotorQuotationSlip);
+router.get('/non-motor-quotation-slips/:id', requireAuth, getNonMotorQuotationSlip);
+router.patch('/non-motor-quotation-slips/:id', ...staff, validateBody(nonMotorQuotationSlipSchema), updateNonMotorQuotationSlip);
 
 router.post('/contacts', inquiryLimiter, createContact);
 router.get('/contacts', requireAuth, listContacts);

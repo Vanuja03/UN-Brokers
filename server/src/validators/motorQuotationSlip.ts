@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { stripTags } from '../utils/sanitize.js';
 import { textField } from './common.js';
 
 const coverValue = z.object({
@@ -97,6 +98,7 @@ export const motorQuotationSlipSchema = z
         tpd: { selected: covers.tpd.selected, value: covers.tpd.selected ? covers.tpd.value.trim() : '' },
         hp: { selected: covers.hp.selected, value: '' },
       })),
+    notes: z.string().optional().transform((value) => stripTags(value ?? '').trim()).pipe(z.string().max(800, 'Enter 800 characters or fewer.')),
     inquiryId: z.string().optional().default(''),
     motorQuotationId: z.string().optional().default(''),
   });

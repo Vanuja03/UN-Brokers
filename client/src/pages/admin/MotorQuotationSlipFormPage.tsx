@@ -32,6 +32,7 @@ type SlipDraft = {
   };
   inquiryId: string;
   motorQuotationId: string;
+  notes: string;
 };
 
 const tickOnly = [
@@ -131,6 +132,7 @@ function blankSlip(): SlipDraft {
     },
     inquiryId: '',
     motorQuotationId: '',
+    notes: '',
   };
 }
 
@@ -186,6 +188,7 @@ export function MotorQuotationSlipFormPage() {
             },
             inquiryId: saved.inquiryId || '',
             motorQuotationId: saved.motorQuotationId || '',
+            notes: saved.notes || '',
           });
         }
         return;
@@ -284,6 +287,7 @@ export function MotorQuotationSlipFormPage() {
       || [...tickValue, ...tickValueMid, ...tickValueAfter].some((cover) => values.covers[cover.key].selected)
       || tickTimes.some((cover) => values.covers[cover.key].selected);
     if (!any) errors['covers.basic'] = 'Tick at least one cover.';
+    if (values.notes.trim().length > 800) errors.notes = 'Enter 800 characters or fewer.';
     return errors;
   }
 
@@ -336,7 +340,7 @@ export function MotorQuotationSlipFormPage() {
       {error ? <p role="alert" className="text-sm text-red-700">{error}</p> : null}
       <section className="grid gap-3 rounded-2xl border border-slate-200 bg-white p-5 md:grid-cols-2">
         <Field label="Customer name" value={draft.customerName} error={fieldErrors.customerName} onChange={(value) => update({ customerName: value })} />
-        <Field label="Vehicle no" value={draft.vehicleNumber} error={fieldErrors.vehicleNumber} onChange={(value) => update({ vehicleNumber: value })} />
+        <Field label="Vehicle no or chassis no" value={draft.vehicleNumber} error={fieldErrors.vehicleNumber} onChange={(value) => update({ vehicleNumber: value })} />
         <Field label="Sum insured" value={draft.sumInsured} error={fieldErrors.sumInsured} onChange={(value) => update({ sumInsured: value })} />
         <Field label="Make" value={draft.make} error={fieldErrors.make} onChange={(value) => update({ make: value })} />
         <Field label="Model" value={draft.model} error={fieldErrors.model} onChange={(value) => update({ model: value })} />
@@ -520,6 +524,18 @@ export function MotorQuotationSlipFormPage() {
           </label>
         </div>
       </fieldset>
+      <label className="block rounded-2xl border border-slate-200 bg-white p-5 text-sm font-medium text-navy-900">
+        Notes
+        <span className="mt-1 block font-normal text-slate-600">Optional. Anything written here is printed at the bottom of the slip.</span>
+        <textarea
+          className="field mt-3 min-h-28"
+          value={draft.notes}
+          maxLength={800}
+          aria-invalid={fieldErrors.notes ? true : undefined}
+          onChange={(event) => update({ notes: event.target.value })}
+        />
+        {fieldErrors.notes ? <span className="mt-1 block text-sm text-red-700">{fieldErrors.notes}</span> : null}
+      </label>
       <button type="submit" className="rounded-full bg-gold px-5 py-2 text-sm font-semibold text-navy-950 disabled:opacity-60" disabled={pending}>
         {pending ? 'Saving…' : 'Save and download PDF'}
       </button>

@@ -38,6 +38,7 @@ export type QuotationSlipPdfInput = {
     tpd: ValuedCover;
     hp: ValuedCover;
   };
+  notes: string;
   preparedBy: string;
   companyName: string;
   telephone: string;
@@ -156,7 +157,7 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
 
     const facts: [string, string][] = [
       ['Customer name', input.customerName],
-      ['Vehicle no', input.vehicleNumber],
+      ['Vehicle no or chassis no', input.vehicleNumber],
       ['Sum insured', input.sumInsured || ''],
       ['Make', input.make],
       ['Model', input.model],
@@ -165,7 +166,7 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
       ['Vehicle type', input.vehicleType],
       ['Vehicle usage', input.vehicleUsage],
     ];
-    const labelWidth = 150;
+    const labelWidth = 180;
     facts.forEach((fact, index) => {
       const rowHeight = 28;
       if (index % 2 === 0) doc.rect(left, y, width, rowHeight).fill(mist);
@@ -201,6 +202,23 @@ export function renderMotorQuotationSlipPdf(input: QuotationSlipPdfInput) {
     if (input.preparedBy) {
       y += 14;
       doc.fillColor(navy).font('Helvetica-Bold').fontSize(11).text(`Prepared by  ${input.preparedBy}`, left, y, { width, height: 14 });
+      y += 16;
+    }
+
+    const notes = (input.notes || '').trim();
+    if (notes) {
+      doc.font('Helvetica').fontSize(10);
+      const notesHeight = doc.heightOfString(notes, { width });
+      if (y + notesHeight + 28 > doc.page.height - 48) {
+        doc.addPage();
+        paintWatermark(doc);
+        y = 48;
+      } else {
+        y += 8;
+      }
+      doc.fillColor(navy).font('Helvetica-Bold').fontSize(12).text('Notes', left, y, { width });
+      y = doc.y + 4;
+      doc.fillColor(ink).font('Helvetica').fontSize(10).text(notes, left, y, { width });
     }
 
     const footer = [input.companyName, input.telephone, input.email, input.address].filter(Boolean).join('   ·   ');
