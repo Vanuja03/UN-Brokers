@@ -104,12 +104,26 @@ export const defaultInsurers = [
   'Sri Lanka Insurance',
 ];
 
-export function rowLabels(type: MotorCover) {
-  return type === 'motor' ? comprehensiveRows : thirdPartyRows;
+export function quotationInsurerName(name: string) {
+  return name === 'Continental Life' ? 'Continental Insurance' : name;
 }
 
-export function rowsFor(type: MotorCover, insurers: string[]): ComparisonRow[] {
-  const rows = rowLabels(type).map((label) => ({ label, values: insurers.map(() => '') }));
+export function needsLegalLiability(usage: string) {
+  const value = usage.trim().toLowerCase();
+  return value === 'hiring' || value === 'rent a car' || value === 'rent-a-car';
+}
+
+export function rowLabels(type: MotorCover, usage = '') {
+  const base = type === 'motor' ? [...comprehensiveRows] : [...thirdPartyRows];
+  if (!needsLegalLiability(usage)) return base;
+  const without = base.filter((label) => label.trim().toLowerCase() !== 'legal liability');
+  const towing = without.indexOf('Towing charges (LKR)');
+  if (towing === -1) return [...without, 'Legal liability'];
+  return [...without.slice(0, towing), 'Legal liability', ...without.slice(towing)];
+}
+
+export function rowsFor(type: MotorCover, insurers: string[], usage = ''): ComparisonRow[] {
+  const rows = rowLabels(type, usage).map((label) => ({ label, values: insurers.map(() => '') }));
   if (type === 'motor') {
     for (const label of optionalComprehensiveRows) {
       rows.push({ label, values: insurers.map((insurer) => (isFreeTaxiLabel(label) ? freeTaxiDefault(insurer) : '')) });
@@ -118,7 +132,7 @@ export function rowsFor(type: MotorCover, insurers: string[]): ComparisonRow[] {
   return rows;
 }
 
-export function arrangeQuotationRows(type: MotorCover, rows: ComparisonRow[], insurerCount: number): ComparisonRow[] {
+export function arrangeQuotationRows(type: MotorCover, rows: ComparisonRow[], insurerCount: number, usage = ''): ComparisonRow[] {
   const pools = new Map<string, ComparisonRow[]>();
   for (const row of visibleQuotationRows(rows)) {
     const key = row.label.trim().toLowerCase();
@@ -127,7 +141,7 @@ export function arrangeQuotationRows(type: MotorCover, rows: ComparisonRow[], in
     pools.set(key, list);
   }
   const take = (label: string) => pools.get(label.trim().toLowerCase())?.shift();
-  const fixed = rowLabels(type).map((label) => take(label) ?? { label, values: blankValues(insurerCount) });
+  const fixed = rowLabels(type, usage).map((label) => take(label) ?? { label, values: blankValues(insurerCount) });
   const optional = type === 'motor'
     ? optionalComprehensiveRows.flatMap((label) => {
       const found = take(label);
@@ -151,8 +165,15 @@ export function fillEmptyTaxiDefaults(rows: ComparisonRow[], insurers: string[])
   });
 }
 
-export function isExtraClaim(type: MotorCover, index: number) {
-  return index >= rowLabels(type).length;
+export function rowsForUsage(draft: MotorQuotationDraft): ComparisonRow[] {
+  const source = draft.insuranceType === 'motor' && !needsLegalLiability(draft.usage)
+    ? draft.rows.filter((row) => row.label.trim().toLowerCase() !== 'legal liability')
+    : draft.rows;
+  return arrangeQuotationRows(draft.insuranceType, source, draft.insurers.length, draft.usage);
+}
+
+export function isExtraClaim(type: MotorCover, index: number, usage = '') {
+  return index >= rowLabels(type, usage).length;
 }
 
 export function blankQuotation(type: MotorCover, preparedBy = ''): MotorQuotationDraft {

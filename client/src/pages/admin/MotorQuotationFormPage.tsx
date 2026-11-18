@@ -1,7 +1,7 @@
 import { FormEvent, useEffect, useState } from 'react';
 import { Link, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import { insurerPartners } from '../../content/insurerPartners';
-import { arrangeQuotationRows, blankQuotation, fillEmptyTaxiDefaults, isExtraClaim, isYesNoBenefit, renameInsurer, resizeInsurers, rowsFor, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
+import { blankQuotation, fillEmptyTaxiDefaults, isExtraClaim, isYesNoBenefit, quotationInsurerName, renameInsurer, resizeInsurers, rowsFor, rowsForUsage, type MotorCover, type MotorQuotationDraft } from '../../content/motorQuotation';
 import { api, getErrorMessage } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 import { downloadPdf } from './MotorQuotationsPage';
@@ -17,6 +17,7 @@ const usageLabels: Record<string, string> = {
 };
 
 const fuelOptions = ['Petrol', 'Diesel', 'Electric', 'PHEV', 'Hybrid'];
+const usageOptions = ['Private', 'Hiring', 'Rent a car'];
 
 const fuelLabels: Record<string, string> = {
   petrol: 'Petrol',
@@ -55,7 +56,10 @@ export function MotorQuotationFormPage() {
       if (id) {
         const response = await api.get(`/motor-quotations/${id}`);
         const saved = response.data.data as MotorQuotationDraft;
-        if (!cancelled) setDraft({ ...saved, rows: fillEmptyTaxiDefaults(arrangeQuotationRows(saved.insuranceType, saved.rows, saved.insurers.length), saved.insurers) });
+        if (!cancelled) {
+          const savedDraft = { ...saved, rows: saved.rows };
+          setDraft({ ...savedDraft, rows: fillEmptyTaxiDefaults(rowsForUsage(savedDraft), saved.insurers) });
+        }
         return;
       }
       const next = blankQuotation('motor', admin?.name || '');
@@ -75,6 +79,7 @@ export function MotorQuotationFormPage() {
       filled.customerName = quote.customerName || '';
       filled.vehicleNumber = String(details.registrationNumber || '');
       filled.usage = usageLabels[String(details.vehicleUsage || '')] || String(details.vehicleUsage || '');
+      filled.rows = rowsFor(filled.insuranceType, filled.insurers, filled.usage);
       filled.yearOfManufacture = String(details.yearOfManufacture || '');
       filled.sumInsured = details.estimatedMarketValue ? String(details.estimatedMarketValue) : '';
       filled.make = String(details.vehicleMake || '');
@@ -109,8 +114,17 @@ export function MotorQuotationFormPage() {
     });
   }
 
+  function insurerChoices() {
+    return [...new Set(insurerPartners.map((partner) => quotationInsurerName(partner.name)))];
+  }
+
   function nextPartnerName(chosen: string[]) {
-    return insurerPartners.find((partner) => !chosen.includes(partner.name))?.name || insurerPartners[0]?.name || 'Insurer';
+    const names = insurerChoices();
+    return names.find((name) => !chosen.includes(name)) || names[0] || 'Insurer';
+  }
+
+  function changeUsage(usage: string) {
+    setDraft((current) => (current ? { ...current, usage, rows: fillEmptyTaxiDefaults(rowsForUsage({ ...current, usage }), current.insurers) } : current));
   }
 
   function changeType(insuranceType: MotorCover) {
@@ -120,7 +134,7 @@ export function MotorQuotationFormPage() {
       return {
         ...current,
         insuranceType,
-        rows: rowsFor(insuranceType, insurers),
+        rows: rowsFor(insuranceType, insurers, current.usage),
       };
     });
   }
@@ -128,7 +142,7 @@ export function MotorQuotationFormPage() {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft) return;
-    if (draft.rows.some((row, index) => isExtraClaim(draft.insuranceType, index) && !row.label.trim())) {
+    if (draft.rows.some((row, index) => isExtraClaim(draft.insuranceType, index, draft.usage) && !row.label.trim())) {
       setError('Enter a name for each added claim.');
       return;
     }
@@ -156,7 +170,7 @@ export function MotorQuotationFormPage() {
       setError('Enter the customer name before showing a preview.');
       return;
     }
-    if (draft.rows.some((row, index) => isExtraClaim(draft.insuranceType, index) && !row.label.trim())) {
+    if (draft.rows.some((row, index) => isExtraClaim(draft.insuranceType, index, draft.usage) && !row.label.trim())) {
       setError('Enter a name for each added claim.');
       return;
     }
@@ -206,8 +220,12 @@ export function MotorQuotationFormPage() {
         <label className="text-sm font-medium">Lease or loan no.
           <input className="field mt-1" value={draft.leaseOrLoanNo} onChange={(event) => update({ leaseOrLoanNo: event.target.value })} />
         </label>
-        <label className="text-sm font-medium">Usage
-          <input className="field mt-1" value={draft.usage} onChange={(event) => update({ usage: event.target.value })} />
+        <label className="text-sm font-medium">Vehicle usage
+          <select className="field mt-1" value={draft.usage} onChange={(event) => changeUsage(event.target.value)}>
+            <option value="">Select</option>
+            {draft.usage && !usageOptions.includes(draft.usage) ? <option value={draft.usage}>{draft.usage}</option> : null}
+            {usageOptions.map((option) => <option key={option} value={option}>{option}</option>)}
+          </select>
         </label>
         <label className="text-sm font-medium">Year of manufacture
           <input className="field mt-1" value={draft.yearOfManufacture} onChange={(event) => update({ yearOfManufacture: event.target.value })} />
@@ -256,8 +274,8 @@ export function MotorQuotationFormPage() {
                 value={insurer}
                 onChange={(event) => update(renameInsurer(draft, index, event.target.value))}
               >
-                {insurer && !insurerPartners.some((partner) => partner.name === insurer) ? <option value={insurer}>{insurer}</option> : null}
-                {insurerPartners.map((partner) => <option key={partner.name} value={partner.name}>{partner.name}</option>)}
+                {insurer && !insurerChoices().includes(insurer) ? <option value={insurer}>{insurer}</option> : null}
+                {insurerChoices().map((name) => <option key={name} value={name}>{name}</option>)}
               </select>
               {draft.insurers.length > 1 ? (
                 <button
@@ -298,7 +316,7 @@ export function MotorQuotationFormPage() {
             {draft.rows.map((row, rowIndex) => (
               <tr key={rowIndex} className={rowIndex % 2 === 0 ? 'bg-navy-50' : 'bg-white'}>
                 <th className="px-3 py-2 text-left font-semibold text-navy-900">
-                  {isExtraClaim(draft.insuranceType, rowIndex) ? (
+                  {isExtraClaim(draft.insuranceType, rowIndex, draft.usage) ? (
                     <div className="flex min-w-48 items-center gap-2">
                       <input
                         className="field"
